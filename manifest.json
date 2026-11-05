@@ -2,7 +2,7 @@
   "name": "DayFlow PRO — Планировщик дня",
   "short_name": "DayFlow",
   "description": "Умный планировщик дня с таймером, шаблонами и статистикой",
-  "start_url": "./planner.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0b0e14",
