@@ -1,0 +1,2738 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DayFlow PRO — Планировщик дня</title>
+<meta name="theme-color" content="#0b0e14">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236c8cff'/><text x='50' y='68' font-size='58' text-anchor='middle'>📅</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0e14; --bg-2: #12151f; --card: #171b27; --card-hover: #1e2333;
+    --border: #262c3f; --text: #e8ecf4; --muted: #8b93a7;
+    --accent: #6c8cff; --accent-2: #a855f7;
+    --green: #34d399; --yellow: #fbbf24; --red: #f87171; --blue: #38bdf8;
+    --gold: #fbbf24; --gold-2: #f59e0b;
+    --danger: #ef4444; --danger-2: #dc2626;
+    --shadow: 0 10px 40px rgba(0,0,0,.5); --radius: 16px;
+    --font-size: 14px;
+  }
+  [data-theme="light"] { --bg: #f4f6fb; --bg-2: #e9edf7; --card: #ffffff; --card-hover: #f7f9ff; --border: #dfe4f0; --text: #1a2032; --muted: #6b7387; --shadow: 0 10px 40px rgba(30,40,80,.10); }
+  [data-theme="gold"] { --bg: #1a1208; --bg-2: #241a0c; --card: #2d1f0e; --card-hover: #3a2814; --border: #4a3418; --text: #fef3c7; --muted: #a88852; --accent: #fbbf24; --accent-2: #f59e0b; --shadow: 0 10px 40px rgba(251,191,36,.2); }
+  [data-theme="neon"] { --bg: #0a0014; --bg-2: #10001f; --card: #160028; --card-hover: #1f0033; --border: #3d0055; --text: #e0d5f5; --muted: #9d7ab8; --accent: #ff00ff; --accent-2: #00ffff; --shadow: 0 10px 40px rgba(255,0,255,.3); }
+  [data-theme="ocean"] { --bg: #001a2e; --bg-2: #002540; --card: #002e4d; --card-hover: #003a5f; --border: #004d7a; --text: #d4f1f9; --muted: #6ba5c2; --accent: #00d4ff; --accent-2: #0080ff; --shadow: 0 10px 40px rgba(0,212,255,.25); }
+  [data-theme="cyberpunk"] { --bg: #0d0221; --bg-2: #160833; --card: #1e0d44; --card-hover: #281255; --border: #3d1c77; --text: #f0f0ff; --muted: #8b7ab8; --accent: #ff006e; --accent-2: #ffbe0b; --shadow: 0 10px 40px rgba(255,0,110,.3); }
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body { background: radial-gradient(1200px 600px at 10% -10%, rgba(108,140,255,.15) 0%, transparent 60%), radial-gradient(1000px 500px at 110% 10%, rgba(168,85,247,.12) 0%, transparent 55%), var(--bg); color: var(--text); min-height: 100vh; padding: 22px; transition: background .3s, color .3s; font-size: var(--font-size); }
+  .app { max-width: 1320px; margin: 0 auto; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 46px; height: 46px; border-radius: 13px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; font-size: 23px; box-shadow: 0 6px 22px rgba(108,140,255,.45); }
+  .logo h1 { font-size: 22px; font-weight: 800; }
+  .logo h1 span { background: linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .logo p { font-size: 12px; color: var(--muted); }
+  .premium-badge { display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, var(--gold), var(--gold-2)); color: #3d2600; padding: 3px 9px; border-radius: 99px; font-size: 10px; font-weight: 900; letter-spacing: .5px; margin-left: 8px; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .clock { background: var(--card); border: 1px solid var(--border); padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); min-width: 90px; text-align: center; }
+  .icon-round { width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; font-size: 18px; display: grid; place-items: center; transition: .2s; }
+  .icon-round:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .icon-round.premium-btn { border-color: var(--gold); color: var(--gold); }
+
+  nav.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; background: var(--card); border: 1px solid var(--border); padding: 6px; border-radius: 14px; box-shadow: var(--shadow); }
+  .tab { padding: 10px 16px; border-radius: 10px; cursor: pointer; user-select: none; font-size: 13px; font-weight: 700; color: var(--muted); transition: .2s; display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .tab:hover { color: var(--text); background: var(--bg-2); }
+  .tab.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 4px 14px rgba(108,140,255,.4); }
+  .tab.premium-tab { color: var(--gold); }
+  .tab.premium-tab.active { background: linear-gradient(135deg, var(--gold), var(--gold-2)); color: #3d2600; }
+  .tab.important-tab { color: var(--danger); }
+  .tab.important-tab.active { background: linear-gradient(135deg, var(--danger), var(--danger-2)); color: #fff; box-shadow: 0 4px 14px rgba(239,68,68,.5); }
+  .tab.creator-tab { color: #06b6d4; }
+  .tab.creator-tab.active { background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff; box-shadow: 0 4px 14px rgba(6,182,212,.5); }
+
+  .page { display: none; animation: fadeIn .3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 13px; margin-bottom: 20px; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; position: relative; overflow: hidden; transition: .25s; }
+  .stat:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+  .stat-value { font-size: 27px; font-weight: 800; margin-top: 6px; }
+  .stat-value.green { color: var(--green); } .stat-value.yellow { color: var(--yellow); }
+  .stat-value.blue { color: var(--accent); } .stat-value.red { color: var(--red); }
+
+  .progress-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 20px; }
+  .progress-head { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; color: var(--muted); }
+  .progress-track { height: 11px; background: rgba(0,0,0,.25); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--green)); border-radius: 99px; transition: width .6s; background-size: 200% 100%; animation: shimmer 3s linear infinite; }
+  @keyframes shimmer { 0%{background-position:0% 0} 100%{background-position:200% 0} }
+
+  .grid { display: grid; grid-template-columns: 360px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } .col-left { order: 2; } .col-right { order: 1; } }
+  .col { display: flex; flex-direction: column; gap: 16px; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .panel h2 { font-size: 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+
+  .field { margin-bottom: 11px; }
+  .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+  input, select, textarea { width: 100%; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--text); font-size: 14px; outline: none; transition: .2s; font-family: inherit; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,140,255,.15); }
+  textarea { resize: vertical; min-height: 56px; }
+  .row { display: flex; gap: 9px; }
+  .row > * { flex: 1; }
+  .btn { width: 100%; padding: 12px; border: none; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: .2s; box-shadow: 0 4px 14px rgba(108,140,255,.3); }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,140,255,.45); }
+  .btn:active { transform: translateY(0); }
+  .btn.ghost { background: var(--bg-2); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.danger { background: transparent; border: 1px solid rgba(248,113,113,.4); color: var(--red); box-shadow: none; }
+  .btn.danger:hover { background: rgba(248,113,113,.1); }
+  .btn.gold { background: linear-gradient(135deg, var(--gold), var(--gold-2)); color: #3d2600; box-shadow: 0 4px 14px rgba(251,191,36,.4); }
+  .btn.sm { padding: 8px 12px; font-size: 12px; width: auto; }
+
+  .cat-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cat-chip { padding: 6px 12px; border-radius: 99px; font-size: 12px; border: 1px solid var(--border); background: var(--bg-2); cursor: pointer; transition: .2s; user-select: none; }
+  .cat-chip:hover { border-color: var(--accent); }
+  .cat-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .tasks-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .tasks-head h2 { font-size: 15px; }
+  .toolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter { padding: 6px 13px; border-radius: 99px; background: var(--bg-2); border: 1px solid var(--border); color: var(--muted); font-size: 12px; cursor: pointer; transition: .2s; user-select: none; font-weight: 600; }
+  .filter:hover { color: var(--text); }
+  .filter.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .search-box { display: flex; align-items: center; gap: 8px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; transition: .2s; }
+  .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,140,255,.12); }
+  .search-box input { background: transparent; border: none; padding: 0; box-shadow: none; }
+
+  .task-list { display: flex; flex-direction: column; gap: 9px; }
+  .task { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; display: flex; gap: 12px; align-items: flex-start; transition: .22s; position: relative; overflow: hidden; animation: slideIn .3s ease; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  .task:hover { background: var(--card-hover); border-color: #3a4258; transform: translateX(2px); }
+  .task::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .task[data-priority="low"]::before { background: var(--green); }
+  .task[data-priority="medium"]::before { background: var(--yellow); }
+  .task[data-priority="high"]::before { background: var(--red); }
+  .task.pinned { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .checkbox { width: 22px; height: 22px; min-width: 22px; border-radius: 6px; border: 2px solid var(--border); cursor: pointer; display: grid; place-items: center; transition: .2s; margin-top: 2px; }
+  .checkbox:hover { border-color: var(--accent); transform: scale(1.08); }
+  .checkbox.checked { background: var(--green); border-color: var(--green); }
+  .checkbox.checked::after { content: '✓'; color: #0b0e14; font-size: 14px; font-weight: 900; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-title { font-size: 14px; font-weight: 700; word-break: break-word; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .task.completed .task-title { text-decoration: line-through; color: var(--muted); }
+  .task-meta { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 6px; font-size: 12px; color: var(--muted); align-items: center; }
+  .tag { padding: 2px 8px; border-radius: 6px; font-size: 11px; background: var(--bg-2); border: 1px solid var(--border); white-space: nowrap; font-weight: 600; }
+  .tag.p-high { color: var(--red); border-color: rgba(248,113,113,.3); }
+  .tag.p-medium { color: var(--yellow); border-color: rgba(251,191,36,.3); }
+  .tag.p-low { color: var(--green); border-color: rgba(52,211,153,.3); }
+  .tag.overdue { color: var(--red); border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.08); }
+  .tag.repeat { color: var(--blue); border-color: rgba(56,189,248,.3); }
+  .tag.date-today { color: var(--accent); border-color: rgba(108,140,255,.4); background: rgba(108,140,255,.1); }
+  .task-note { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.45; word-break: break-word; }
+  .subtasks { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .subtask { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); cursor: pointer; }
+  .subtask input { width: 13px; height: 13px; accent-color: var(--accent); cursor: pointer; }
+  .subtask.done span { text-decoration: line-through; opacity: .6; }
+  .task-actions { display: flex; gap: 3px; }
+  .icon-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: transparent; color: var(--muted); cursor: pointer; display: grid; place-items: center; font-size: 13px; transition: .2s; }
+  .icon-btn:hover { background: var(--bg-2); color: var(--text); }
+  .icon-btn.del:hover { color: var(--red); }
+  .mini-progress { height: 4px; background: var(--bg-2); border-radius: 99px; margin-top: 7px; overflow: hidden; }
+  .mini-progress > div { height: 100%; background: var(--green); transition: width .4s; }
+  .empty { text-align: center; padding: 46px 20px; color: var(--muted); border: 2px dashed var(--border); border-radius: var(--radius); }
+  .empty .em { font-size: 40px; margin-bottom: 10px; }
+
+  .timer-box { text-align: center; }
+  .timer-ring { position: relative; width: 170px; height: 170px; margin: 0 auto 12px; }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring .lbl { position: absolute; inset: 0; display: grid; place-items: center; font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+  .timer-presets { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .timer-presets .cat-chip { font-size: 11px; padding: 5px 10px; }
+  .timer-custom { display: flex; gap: 6px; align-items: center; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .timer-custom input { width: 56px; text-align: center; font-size: 15px; font-weight: 700; padding: 8px 4px; }
+  .timer-custom .sep { font-size: 18px; font-weight: 800; color: var(--muted); }
+  .timer-custom .lbl-mini { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .timer-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .timer-btns .btn { width: auto; padding: 9px 18px; font-size: 13px; }
+  .timer-status { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 16px; }
+
+  .chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 90px; margin-top: 8px; }
+  .chart-bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .chart-bar .bar { width: 100%; background: linear-gradient(180deg, var(--accent), var(--accent-2)); border-radius: 4px 4px 0 0; min-height: 3px; transition: height .5s; }
+  .chart-bar .lbl { font-size: 9px; color: var(--muted); font-weight: 700; }
+
+  .toast { position: fixed; bottom: 22px; right: 22px; z-index: 9999; background: var(--card); border: 1px solid var(--border); padding: 13px 18px; border-radius: 12px; box-shadow: var(--shadow); font-size: 13px; transform: translateY(150%); transition: .4s cubic-bezier(.4,0,.2,1); display: flex; align-items: center; gap: 10px; font-weight: 600; max-width: 320px; }
+  .toast.show { transform: translateY(0); }
+  .toast .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); display: none; place-items: center; z-index: 9998; padding: 20px; }
+  .modal-bg.show { display: grid; }
+  .modal { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; max-width: 480px; width: 100%; box-shadow: var(--shadow); animation: pop .25s ease; max-height: 90vh; overflow: auto; }
+  @keyframes pop { from { transform: scale(.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal h3 { font-size: 16px; margin-bottom: 14px; }
+  .modal .actions { display: flex; gap: 8px; margin-top: 16px; }
+
+  .info-wrap { max-width: 900px; margin: 0 auto; }
+  .info-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 18px; box-shadow: var(--shadow); }
+  .info-card h2 { font-size: 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+  .info-card h3 { font-size: 14px; margin: 16px 0 8px; color: var(--accent); }
+  .info-card p, .info-card li { font-size: 14px; color: var(--muted); line-height: 1.7; }
+  .info-card ul, .info-card ol { padding-left: 22px; margin: 8px 0; }
+  .info-card li { margin-bottom: 5px; }
+  .info-card code { background: var(--bg-2); padding: 2px 6px; border-radius: 5px; font-size: 12px; color: var(--accent); }
+
+  .creator-hero { background: linear-gradient(135deg, rgba(6,182,212,.15), rgba(59,130,246,.15), rgba(168,85,247,.15)); border: 2px solid #06b6d4; border-radius: var(--radius); padding: 40px 24px; text-align: center; margin-bottom: 24px; position: relative; overflow: hidden; }
+  .creator-hero > * { position: relative; z-index: 1; }
+  .creator-avatar-big { width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #3b82f6, #a855f7); display: grid; place-items: center; font-size: 60px; margin: 0 auto 20px; box-shadow: 0 0 40px rgba(6,182,212,.6); animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  .creator-name-big { font-size: 32px; font-weight: 900; background: linear-gradient(135deg, #06b6d4, #3b82f6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .creator-role-big { font-size: 16px; color: var(--muted); margin-bottom: 20px; }
+  .creator-tagline { font-size: 15px; color: var(--text); line-height: 1.7; max-width: 700px; margin: 0 auto 20px; }
+  .creator-achievements { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 20px; }
+  .creator-achievement { background: rgba(255,255,255,.05); border: 1px solid rgba(6,182,212,.3); border-radius: 12px; padding: 14px; text-align: center; }
+  .creator-achievement .ca-num { font-size: 26px; font-weight: 900; color: #06b6d4; }
+  .creator-achievement .ca-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+
+  .creator-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 16px; }
+  .creator-info-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+  .creator-info-card h3 { font-size: 14px; color: #06b6d4; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .creator-info-card p, .creator-info-card li { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .creator-info-card ul { padding-left: 20px; }
+
+  .contact-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--bg-2); border-radius: 12px; margin-top: 12px; border: 1px solid var(--border); transition: .2s; }
+  .contact-row:hover { border-color: #06b6d4; transform: translateX(3px); }
+  .contact-row .ico { width: 40px; height: 40px; border-radius: 10px; background: var(--card); display: grid; place-items: center; font-size: 20px; flex-shrink: 0; }
+  .contact-row a { color: #06b6d4; text-decoration: none; font-weight: 600; font-size: 14px; word-break: break-all; }
+  .contact-row .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+  .set-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .set-row:last-child { border-bottom: none; }
+  .set-row .set-info { flex: 1; min-width: 200px; }
+  .set-row .set-name { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+  .set-row .set-desc { font-size: 12px; color: var(--muted); }
+  .set-row .set-ctrl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 99px; transition: .3s; }
+  .switch .slider::before { content: ''; position: absolute; height: 20px; width: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .3s; }
+  .switch input:checked + .slider { background: var(--accent); }
+  .switch input:checked + .slider::before { transform: translateX(22px); }
+
+  .templates-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+  .template-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; transition: .25s; cursor: pointer; position: relative; overflow: hidden; }
+  .template-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 12px 30px rgba(108,140,255,.25); }
+  .template-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+  .template-card.premium-template::before { background: linear-gradient(180deg, var(--gold), var(--gold-2)); }
+  .template-card .tc-icon { font-size: 30px; margin-bottom: 8px; }
+  .template-card .tc-title { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
+  .template-card .tc-desc { font-size: 12px; color: var(--muted); line-height: 1.4; margin-bottom: 10px; }
+  .template-card .tc-count { font-size: 11px; color: var(--accent); font-weight: 700; padding: 3px 8px; background: rgba(108,140,255,.12); border-radius: 6px; display: inline-block; }
+  .template-card.premium-template .tc-count { color: var(--gold); background: rgba(251,191,36,.12); }
+  .lock-badge { position: absolute; top: 12px; right: 12px; background: var(--gold); color: #3d2600; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 900; }
+
+  .pwa-banner { background: linear-gradient(135deg, rgba(108,140,255,.15), rgba(168,85,247,.15)); border: 1px solid var(--accent); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px; display: none; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .pwa-banner.show { display: flex; }
+  .pwa-banner .ico { font-size: 34px; }
+  .pwa-banner .txt { flex: 1; min-width: 200px; }
+  .pwa-banner .txt h3 { font-size: 15px; margin-bottom: 4px; }
+  .pwa-banner .txt p { font-size: 13px; color: var(--muted); }
+
+  .premium-hero { text-align: center; padding: 40px 20px; background: radial-gradient(800px 300px at 50% 0%, rgba(251,191,36,.15), transparent 70%); border-radius: var(--radius); margin-bottom: 24px; }
+  .premium-hero h1 { font-size: 42px; font-weight: 900; margin-bottom: 12px; background: linear-gradient(135deg, var(--gold), #fde68a, var(--gold-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px; }
+  .premium-hero p { font-size: 16px; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.5; }
+  .premium-hero .crown { font-size: 64px; margin-bottom: 16px; display: block; animation: float 3s ease-in-out infinite; }
+
+  .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .plan { background: var(--card); border: 2px solid var(--border); border-radius: var(--radius); padding: 24px 20px; text-align: center; cursor: pointer; transition: .3s; position: relative; overflow: hidden; }
+  .plan:hover { transform: translateY(-6px); border-color: var(--gold); box-shadow: 0 15px 40px rgba(251,191,36,.25); }
+  .plan.featured { border-color: var(--gold); background: linear-gradient(180deg, rgba(251,191,36,.08), var(--card)); }
+  .plan-badge { position: absolute; top: 0; right: 0; background: linear-gradient(135deg, var(--gold), var(--gold-2)); color: #3d2600; font-size: 10px; font-weight: 900; padding: 5px 12px; border-radius: 0 var(--radius) 0 12px; letter-spacing: .5px; }
+  .plan-icon { font-size: 42px; margin-bottom: 10px; }
+  .plan-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+  .plan-price { font-size: 38px; font-weight: 900; margin: 12px 0 4px; }
+  .plan-price .cur { font-size: 20px; color: var(--muted); }
+  .plan-price-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .plan-features { text-align: left; margin: 16px 0; font-size: 12px; color: var(--muted); line-height: 1.9; }
+  .plan-features li { list-style: none; padding-left: 20px; position: relative; }
+  .plan-features li::before { content: '✓'; position: absolute; left: 0; color: var(--green); font-weight: 900; }
+
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 24px; }
+  .feature-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; transition: .25s; }
+  .feature-item:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .feature-item .fi-icon { font-size: 26px; margin-bottom: 8px; }
+  .feature-item .fi-title { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .feature-item .fi-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .pay-page { max-width: 600px; margin: 0 auto; }
+  .pay-step { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  .step-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; font-weight: 900; font-size: 15px; margin-right: 10px; }
+  .pay-step h3 { display: flex; align-items: center; font-size: 16px; margin-bottom: 16px; }
+  .pay-step .info-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .pay-step .info-row:last-child { border-bottom: none; }
+  .pay-step .info-row .label { font-size: 13px; color: var(--muted); }
+  .pay-step .info-row .value { font-size: 14px; font-weight: 700; text-align: right; }
+  .copy-field { display: flex; align-items: center; gap: 8px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-top: 8px; }
+  .copy-field .text { flex: 1; font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; letter-spacing: .5px; word-break: break-all; }
+  .copy-field .copy-btn { background: var(--accent); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; transition: .2s; flex-shrink: 0; }
+  .copy-field .copy-btn:hover { background: var(--accent-2); }
+  .copy-field .copy-btn.copied { background: var(--green); }
+
+  .pay-note { background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.3); border-radius: 10px; padding: 12px 14px; font-size: 12px; color: var(--yellow); line-height: 1.5; margin-top: 12px; }
+
+  .activation-box { background: linear-gradient(135deg, rgba(251,191,36,.1), rgba(168,85,247,.1)); border: 2px solid var(--gold); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; text-align: center; }
+  .activation-box h3 { font-size: 18px; margin-bottom: 8px; color: var(--gold); display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .activation-box p { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+  .activation-form { max-width: 400px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+  .activation-form input { text-align: center; font-size: 15px; font-weight: 700; }
+  .activation-form input.code-input { letter-spacing: 2px; text-transform: uppercase; font-family: 'Courier New', monospace; }
+  .activation-form .btn { width: 100%; padding: 12px 20px; }
+
+  .admin-panel { position: fixed; bottom: 20px; left: 20px; z-index: 9997; }
+  .admin-trigger { width: 44px; height: 44px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--muted); font-size: 16px; cursor: pointer; opacity: .35; transition: .3s; display: grid; place-items: center; }
+  .admin-trigger:hover { opacity: 1; transform: scale(1.1); border-color: var(--red); color: var(--red); }
+  .admin-trigger.unlocked { opacity: 1; background: linear-gradient(135deg, var(--red), #dc2626); color: #fff; border-color: transparent; box-shadow: 0 4px 16px rgba(248,113,113,.5); }
+
+  .admin-badge { position: fixed; top: 16px; right: 16px; z-index: 9997; background: linear-gradient(135deg, var(--red), #dc2626); color: #fff; padding: 6px 14px; border-radius: 99px; font-size: 11px; font-weight: 900; letter-spacing: .5px; box-shadow: 0 4px 16px rgba(248,113,113,.5); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+  .admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .admin-stat { background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  .admin-stat .as-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .admin-stat .as-val { font-size: 24px; font-weight: 900; margin-top: 4px; color: var(--accent); }
+  .admin-stat .as-val.green { color: var(--green); }
+  .admin-stat .as-val.gold { color: var(--gold); }
+  .admin-stat .as-val.red { color: var(--red); }
+
+  .admin-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .admin-actions .btn { width: auto; padding: 10px 16px; font-size: 13px; }
+
+  .gen-codes-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; max-height: 400px; overflow-y: auto; }
+  .gen-code-item { display: flex; align-items: center; gap: 8px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 13px; flex-wrap: wrap; }
+  .gen-code-item.used { opacity: .55; }
+  .gen-code-item .plan-tag { padding: 2px 7px; border-radius: 5px; font-size: 10px; font-weight: 900; flex-shrink: 0; }
+  .gen-code-item .plan-tag.m { background: rgba(108,140,255,.2); color: var(--accent); }
+  .gen-code-item .plan-tag.y { background: rgba(52,211,153,.2); color: var(--green); }
+  .gen-code-item .plan-tag.f { background: rgba(251,191,36,.2); color: var(--gold); }
+  .gen-code-item .code-text { font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 1px; word-break: break-all; color: var(--text); }
+  .gen-code-item .email-tag { font-size: 11px; color: var(--blue); font-family: 'Segoe UI', sans-serif; word-break: break-all; }
+  .gen-code-item .copy-icon { background: var(--accent); color: #fff; border: none; width: 26px; height: 26px; border-radius: 6px; cursor: pointer; font-size: 12px; flex-shrink: 0; }
+  .gen-code-item .del-icon { background: transparent; border: 1px solid rgba(248,113,113,.3); color: var(--red); width: 26px; height: 26px; border-radius: 6px; cursor: pointer; font-size: 12px; flex-shrink: 0; }
+  .gen-code-item .del-icon:hover { background: rgba(248,113,113,.1); }
+  .gen-code-item .used-mark { font-size: 10px; color: var(--red); font-weight: 900; padding: 2px 7px; background: rgba(248,113,113,.15); border-radius: 5px; flex-shrink: 0; }
+
+  /* HISTORY */
+  .history-list { display: flex; flex-direction: column; gap: 8px; max-height: 500px; overflow-y: auto; margin-top: 12px; }
+  .history-item { background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+  .history-item .hi-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+  .history-item .hi-email { font-weight: 700; color: var(--accent); font-size: 13px; word-break: break-all; }
+  .history-item .hi-date { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .history-item .hi-bottom { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 11px; color: var(--muted); }
+  .history-item .hi-code { font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: .5px; color: var(--text); word-break: break-all; }
+  .history-item .hi-plan { padding: 2px 7px; border-radius: 5px; font-size: 10px; font-weight: 900; }
+  .history-item .hi-plan.m { background: rgba(108,140,255,.2); color: var(--accent); }
+  .history-item .hi-plan.y { background: rgba(52,211,153,.2); color: var(--green); }
+  .history-item .hi-plan.f { background: rgba(251,191,36,.2); color: var(--gold); }
+
+  /* EXPIRY */
+  .expiry-banner { background: linear-gradient(135deg, rgba(251,191,36,.15), rgba(251,113,133,.15)); border: 1px solid var(--yellow); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 16px; display: none; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .expiry-banner.show { display: flex; }
+  .expiry-banner .ico { font-size: 26px; }
+  .expiry-banner .txt { flex: 1; min-width: 200px; }
+  .expiry-banner .txt h3 { font-size: 14px; margin-bottom: 3px; color: var(--yellow); }
+  .expiry-banner .txt p { font-size: 12px; color: var(--muted); }
+  .expiry-banner .btn { width: auto; padding: 8px 16px; font-size: 12px; }
+
+  .prem-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 16px; }
+  .prem-stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .prem-stat-card h3 { font-size: 14px; margin-bottom: 14px; color: var(--accent); }
+  .prem-stat-card.locked { position: relative; }
+  .prem-stat-card.locked::after { content: '👑 Premium'; position: absolute; top: 12px; right: 12px; background: var(--gold); color: #3d2600; padding: 3px 10px; border-radius: 99px; font-size: 10px; font-weight: 900; }
+  .prem-stat-card.locked > *:not(h3) { filter: blur(4px); pointer-events: none; user-select: none; }
+
+  .heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 10px; }
+  .heatmap-cell { aspect-ratio: 1; border-radius: 3px; background: var(--bg-2); transition: .2s; cursor: pointer; }
+  .heatmap-cell:hover { transform: scale(1.3); z-index: 10; }
+  .heatmap-cell[data-level="1"] { background: rgba(52,211,153,.25); }
+  .heatmap-cell[data-level="2"] { background: rgba(52,211,153,.5); }
+  .heatmap-cell[data-level="3"] { background: rgba(52,211,153,.75); }
+  .heatmap-cell[data-level="4"] { background: var(--green); }
+
+  .cat-bars { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .cat-bar-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .cat-bar-row .cat-label { width: 100px; flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
+  .cat-bar-row .cat-track { flex: 1; height: 8px; background: var(--bg-2); border-radius: 99px; overflow: hidden; }
+  .cat-bar-row .cat-fill { height: 100%; border-radius: 99px; transition: width .6s; }
+  .cat-bar-row .cat-num { width: 40px; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* IMPORTANT — статичная, в конце */
+  .important-hero { background: linear-gradient(135deg, rgba(239,68,68,.25), rgba(220,38,38,.15)); border: 3px solid var(--danger); border-radius: var(--radius); padding: 40px 24px; text-align: center; margin-bottom: 24px; }
+  .important-hero h1 { font-size: 36px; font-weight: 900; color: var(--danger); margin-bottom: 12px; letter-spacing: -1px; }
+  .important-hero p { font-size: 16px; color: var(--text); max-width: 700px; margin: 0 auto; line-height: 1.6; }
+  .important-hero .warn-icon { font-size: 72px; margin-bottom: 16px; display: block; }
+
+  .important-section { background: var(--card); border: 2px solid rgba(239,68,68,.4); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; position: relative; overflow: hidden; }
+  .important-section::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: linear-gradient(180deg, var(--danger), var(--danger-2)); }
+  .important-section h2 { font-size: 18px; color: var(--danger); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .important-section p { font-size: 14px; color: var(--text); line-height: 1.7; margin-bottom: 10px; }
+  .important-section ul, .important-section ol { padding-left: 24px; margin: 10px 0; }
+  .important-section li { font-size: 14px; color: var(--text); line-height: 1.7; margin-bottom: 8px; }
+  .important-section strong { color: var(--yellow); font-weight: 800; }
+  .important-section code { background: rgba(239,68,68,.15); padding: 3px 8px; border-radius: 5px; font-size: 13px; color: var(--danger); font-weight: 700; }
+
+  .important-section.critical { background: linear-gradient(135deg, rgba(239,68,68,.1), var(--card)); border-color: var(--danger); }
+
+  .warning-box { background: rgba(239,68,68,.1); border-left: 4px solid var(--danger); padding: 14px 16px; border-radius: 8px; margin: 12px 0; font-size: 13px; color: var(--text); line-height: 1.6; }
+
+  /* MOBILE OPTIMIZATION */
+  @media (max-width: 768px) {
+    body { padding: 12px; font-size: 13px; }
+    .app { max-width: 100%; }
+    .logo-icon { width: 38px; height: 38px; font-size: 19px; }
+    .logo h1 { font-size: 18px; }
+    .clock { padding: 8px 12px; font-size: 13px; min-width: 75px; }
+    .icon-round { width: 38px; height: 38px; font-size: 16px; }
+    nav.tabs {
+      overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; padding: 5px;
+    }
+    nav.tabs::-webkit-scrollbar { display: none; }
+    .tab { padding: 8px 12px; font-size: 12px; flex-shrink: 0; }
+    .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat { padding: 12px 14px; }
+    .stat-label { font-size: 10px; }
+    .stat-value { font-size: 22px; }
+    .panel { padding: 14px; }
+    .panel h2 { font-size: 13px; margin-bottom: 10px; }
+    .task { padding: 10px 12px; gap: 10px; }
+    .task-title { font-size: 13px; }
+    .task-meta { font-size: 11px; gap: 5px; }
+    .tag { font-size: 10px; padding: 2px 6px; }
+    .task-actions { flex-direction: column; gap: 2px; }
+    .icon-btn { width: 26px; height: 26px; font-size: 12px; }
+    .timer-ring { width: 140px; height: 140px; }
+    .timer-ring svg { width: 140px; height: 140px; }
+    .timer-ring .lbl { font-size: 26px; }
+    .btn { padding: 11px; font-size: 13px; min-height: 44px; }
+    .icon-round, .checkbox { min-height: 40px; min-width: 40px; }
+    .creator-hero { padding: 28px 16px; }
+    .creator-avatar-big { width: 90px; height: 90px; font-size: 44px; }
+    .creator-name-big { font-size: 24px; }
+    .creator-role-big { font-size: 13px; }
+    .creator-tagline { font-size: 13px; }
+    .premium-hero { padding: 28px 16px; }
+    .premium-hero h1 { font-size: 28px; }
+    .premium-hero .crown { font-size: 48px; }
+    .plan-grid { grid-template-columns: 1fr; gap: 12px; }
+    .plan { padding: 18px 16px; }
+    .plan-price { font-size: 30px; }
+    .important-hero { padding: 28px 16px; }
+    .important-hero h1 { font-size: 26px; }
+    .important-hero .warn-icon { font-size: 52px; }
+    .important-section { padding: 16px; }
+    .important-section h2 { font-size: 15px; }
+    .important-section p, .important-section li { font-size: 13px; }
+    .info-card { padding: 16px; }
+    .info-card h2 { font-size: 16px; }
+    .modal { padding: 18px; }
+    .admin-stats { grid-template-columns: repeat(2, 1fr); }
+    .admin-stat { padding: 10px 12px; }
+    .admin-stat .as-label { font-size: 10px; }
+    .admin-stat .as-val { font-size: 20px; }
+    .templates-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+    .template-card { padding: 12px; }
+    .template-card .tc-icon { font-size: 24px; }
+    .template-card .tc-title { font-size: 13px; }
+    .template-card .tc-desc { font-size: 11px; }
+    .prem-stats-grid { grid-template-columns: 1fr; }
+    .heatmap-cell { border-radius: 2px; }
+    .gen-codes-list { max-height: 300px; }
+    .expiry-banner { padding: 12px; gap: 10px; }
+    .expiry-banner .ico { font-size: 22px; }
+    .expiry-banner .txt h3 { font-size: 13px; }
+    .toast { bottom: 12px; right: 12px; left: 12px; max-width: none; }
+    .admin-trigger { width: 40px; height: 40px; bottom: 12px; left: 12px; }
+    .admin-panel { bottom: 12px; left: 12px; }
+    .admin-badge { top: 10px; right: 10px; padding: 5px 10px; font-size: 10px; }
+    .history-list { max-height: 400px; }
+  }
+
+  @media (max-width: 400px) {
+    .stats { grid-template-columns: 1fr; }
+    .admin-stats { grid-template-columns: 1fr; }
+    .logo h1 { font-size: 16px; }
+    .clock { display: none; }
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body data-theme="dark">
+<div class="app">
+
+  <div class="admin-badge hidden" id="adminBadge">🔓 АДМИН</div>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📅</div>
+      <div>
+        <h1>Day<span>Flow</span> PRO <span id="premiumBadge" class="premium-badge hidden">👑 PREMIUM</span></h1>
+        <p>Твой день под полным контролем</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="clock" id="clock">00:00:00</div>
+      <button class="icon-round premium-btn" id="premiumBtn" title="Premium">👑</button>
+      <button class="icon-round" id="themeBtn" title="Тема">🌙</button>
+      <button class="icon-round" id="exportBtn" title="Экспорт">⬇️</button>
+      <button class="icon-round" id="importBtn" title="Импорт">⬆️</button>
+      <input type="file" id="importFile" accept=".json" class="hidden">
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <div class="tab active" data-tab="planner">📋 Планировщик</div>
+    <div class="tab" data-tab="templates">🎁 Шаблоны</div>
+    <div class="tab premium-tab" data-tab="premium">👑 Premium</div>
+    <div class="tab" data-tab="stats">📊 Статистика</div>
+    <div class="tab" data-tab="settings">⚙️ Настройки</div>
+    <div class="tab" data-tab="about">ℹ️ О приложении</div>
+    <div class="tab creator-tab" data-tab="creator">👨‍💻 Создатель</div>
+    <div class="tab hidden" data-tab="admin" id="adminTab">🔧 Админ</div>
+    <div class="tab important-tab" data-tab="important">🚨 ВАЖНО</div>
+  </nav>
+
+  <div class="pwa-banner" id="pwaBanner">
+    <div class="ico">📲</div>
+    <div class="txt"><h3>Установить DayFlow PRO</h3><p>Работает офлайн, отдельное окно.</p></div>
+    <button class="btn" id="pwaInstall" style="width:auto;padding:10px 20px">Установить</button>
+    <button class="btn ghost" id="pwaDismiss" style="width:auto;padding:10px 14px">Позже</button>
+  </div>
+
+  <div class="expiry-banner" id="expiryBanner">
+    <div class="ico">⏰</div>
+    <div class="txt">
+      <h3>Premium скоро истекает</h3>
+      <p id="expiryText">Осталось X дней.</p>
+    </div>
+    <button class="btn gold" id="expiryRenew">Продлить</button>
+  </div>
+
+  <!-- PLANNER -->
+  <div class="page active" data-page="planner">
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Всего</div><div class="stat-value blue" id="statTotal">0</div></div>
+      <div class="stat"><div class="stat-label">Выполнено</div><div class="stat-value green" id="statDone">0</div></div>
+      <div class="stat"><div class="stat-label">Осталось</div><div class="stat-value yellow" id="statLeft">0</div></div>
+      <div class="stat"><div class="stat-label">Просрочено</div><div class="stat-value red" id="statOverdue">0</div></div>
+      <div class="stat"><div class="stat-label">Серия дней</div><div class="stat-value green" id="statStreak">0 🔥</div></div>
+      <div class="stat"><div class="stat-label">Прогресс</div><div class="stat-value blue" id="statPct">0%</div></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-head"><span>📈 Прогресс дня</span><span id="progressText">0 / 0</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="grid">
+      <div class="col col-left">
+        <div class="panel">
+          <h2>➕ Новая задача</h2>
+          <form id="taskForm">
+            <div class="field"><label>Название</label><input type="text" id="fTitle" placeholder="Что нужно сделать?" required maxlength="80"></div>
+            <div class="row">
+              <div class="field"><label>Время</label><input type="time" id="fTime"></div>
+              <div class="field"><label>Дата</label><input type="date" id="fDate"></div>
+            </div>
+            <div class="row">
+              <div class="field"><label>Приоритет</label>
+                <select id="fPriority"><option value="low">🟢 Низкий</option><option value="medium" selected>🟡 Средний</option><option value="high">🔴 Высокий</option></select>
+              </div>
+              <div class="field"><label>Повтор</label>
+                <select id="fRepeat"><option value="">Нет</option><option value="daily">Каждый день</option><option value="weekdays">Будни</option><option value="weekly">Раз в неделю</option><option value="monthly">Раз в месяц</option></select>
+              </div>
+            </div>
+            <div class="field"><label>Категория</label>
+              <div class="cat-picker" id="catPicker">
+                <div class="cat-chip active" data-cat="work">💼 Работа</div>
+                <div class="cat-chip" data-cat="personal">🏠 Личное</div>
+                <div class="cat-chip" data-cat="study">📚 Учёба</div>
+                <div class="cat-chip" data-cat="health">💪 Здоровье</div>
+                <div class="cat-chip" data-cat="other">📦 Другое</div>
+              </div>
+            </div>
+            <div class="field"><label>Подзадачи</label><input type="text" id="fSubtasks" placeholder="Через запятую"></div>
+            <div class="field"><label>Заметка</label><textarea id="fNote" maxlength="300"></textarea></div>
+            <button type="submit" class="btn">Добавить задачу</button>
+          </form>
+        </div>
+        <div class="panel timer-box">
+          <h2>⏱ Таймер</h2>
+          <div class="timer-presets">
+            <div class="cat-chip" data-tmin="1">1 мин</div>
+            <div class="cat-chip" data-tmin="5">5 мин</div>
+            <div class="cat-chip" data-tmin="10">10 мин</div>
+            <div class="cat-chip active" data-tmin="25">25 мин</div>
+            <div class="cat-chip" data-tmin="45">45 мин</div>
+            <div class="cat-chip" data-tmin="60">60 мин</div>
+          </div>
+          <div class="timer-ring">
+            <svg width="170" height="170">
+              <circle cx="85" cy="85" r="76" fill="none" stroke="var(--border)" stroke-width="9"/>
+              <circle id="timerArc" cx="85" cy="85" r="76" fill="none" stroke="url(#gradT)" stroke-width="9" stroke-linecap="round" stroke-dasharray="478" stroke-dashoffset="0"/>
+              <defs><linearGradient id="gradT" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--accent)"/><stop offset="100%" stop-color="var(--accent-2)"/></linearGradient></defs>
+            </svg>
+            <div class="lbl" id="timerTime">25:00</div>
+          </div>
+          <div class="timer-custom">
+            <input type="number" id="tHours" min="0" max="23" value="0"><span class="lbl-mini">ч</span>
+            <span class="sep">:</span>
+            <input type="number" id="tMinutes" min="0" max="59" value="25"><span class="lbl-mini">мин</span>
+            <span class="sep">:</span>
+            <input type="number" id="tSeconds" min="0" max="59" value="0"><span class="lbl-mini">сек</span>
+            <button class="btn sm" id="tApply" style="margin-left:6px">✓</button>
+          </div>
+          <div class="timer-btns">
+            <button class="btn" id="timerStart">▶ Старт</button>
+            <button class="btn ghost" id="timerReset">↺ Сброс</button>
+          </div>
+          <div class="timer-status" id="timerStatus">Выбери пресет или введи своё время</div>
+        </div>
+        <div class="panel">
+          <h2>📊 Активность за неделю</h2>
+          <div class="chart-bars" id="chartBars"></div>
+        </div>
+      </div>
+      <div class="col col-right">
+        <div class="panel">
+          <div class="tasks-head">
+            <h2>📋 Задачи</h2>
+            <div class="toolbar">
+              <button class="btn ghost sm" id="sortBtn">⇅ Сорт</button>
+              <button class="btn ghost sm" id="clearDone">🧹 Вып.</button>
+              <button class="btn danger sm" id="clearAll">⚠ Всё</button>
+            </div>
+          </div>
+          <div class="search-box">🔍 <input type="text" id="search" placeholder="Поиск..."></div>
+          <div class="filters" style="margin-bottom:12px">
+            <div class="filter active" data-filter="all">Все</div>
+            <div class="filter" data-filter="active">Активные</div>
+            <div class="filter" data-filter="done">Выполненные</div>
+            <div class="filter" data-filter="overdue">Просроченные</div>
+            <div class="filter" data-filter="today">Сегодня</div>
+            <div class="filter" data-filter="week">Неделя</div>
+            <div class="filter" data-filter="pinned">📌</div>
+          </div>
+          <div class="cat-filters filters" id="catFilters" style="margin-bottom:12px"></div>
+          <div class="task-list" id="taskList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEMPLATES -->
+  <div class="page" data-page="templates">
+    <div class="info-wrap">
+      <div class="info-card">
+        <h2>🎁 Шаблоны задач</h2>
+        <p>Готовые наборы. Нажми — добавятся на сегодня. 👑 Premium — только с подпиской.</p>
+      </div>
+      <div class="templates-grid" id="templatesGrid"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="page" data-page="stats">
+    <div class="info-wrap">
+      <div class="info-card">
+        <h2>📊 Расширенная статистика</h2>
+        <p>Глубокая аналитика продуктивности.</p>
+      </div>
+      <div class="prem-stats-grid">
+        <div class="prem-stat-card">
+          <h3>🔥 Активность за 30 дней</h3>
+          <div class="heatmap" id="heatmap"></div>
+          <p style="font-size:11px;color:var(--muted);margin-top:10px">Темнее — больше выполнено</p>
+        </div>
+        <div class="prem-stat-card">
+          <h3>📂 По категориям</h3>
+          <div class="cat-bars" id="catBars"></div>
+        </div>
+        <div class="prem-stat-card" id="premCard1">
+          <h3>📈 Тренд выполнения</h3>
+          <div id="trendChart" style="height:120px"></div>
+        </div>
+        <div class="prem-stat-card" id="premCard2">
+          <h3>⏱ Среднее время</h3>
+          <p style="font-size:32px;font-weight:900;color:var(--accent)" id="avgTime">—</p>
+        </div>
+        <div class="prem-stat-card" id="premCard3">
+          <h3>🎯 Лучший день</h3>
+          <p style="font-size:32px;font-weight:900;color:var(--green)" id="bestDay">—</p>
+        </div>
+        <div class="prem-stat-card" id="premCard4">
+          <h3>📊 По приоритетам</h3>
+          <div id="prioStats"></div>
+        </div>
+        <div class="prem-stat-card" id="premCard5">
+          <h3>🚀 Streak-рекорд</h3>
+          <p style="font-size:32px;font-weight:900;color:var(--gold)" id="streakRecord">—</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREMIUM -->
+  <div class="page" data-page="premium">
+    <div class="premium-hero">
+      <span class="crown">👑</span>
+      <h1>DayFlow Premium</h1>
+      <p>Разблокируй все возможности: эксклюзивные шаблоны, темы, расширенную статистику.</p>
+    </div>
+    <div class="info-wrap" id="premiumContent">
+      <div class="info-card hidden" id="alreadyPremium" style="text-align:center;background:linear-gradient(180deg,rgba(251,191,36,.1),var(--card));border-color:var(--gold)">
+        <div style="font-size:56px;margin-bottom:12px">👑</div>
+        <h2 style="justify-content:center">Premium активен!</h2>
+        <p style="margin-bottom:8px">Тариф: <b id="activePlan">—</b></p>
+        <p>Действует до: <b id="activeUntil">—</b></p>
+        <p style="margin-top:8px;font-size:12px">Email: <b id="activeEmail">—</b></p>
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="btn ghost" onclick="switchTab('planner')">К задачам</button>
+          <button class="btn gold" onclick="switchTab('stats')">📊 Premium-статистика</button>
+        </div>
+      </div>
+      <div id="noPremium">
+        <div class="activation-box">
+          <h3>🔑 Активация по коду</h3>
+          <p>Введи код + email, на который покупал</p>
+          <div class="activation-form">
+            <input type="text" id="activationCode" class="code-input" placeholder="DF-M-XXXXX-XXXXX" maxlength="30" autocomplete="off">
+            <input type="email" id="activationEmail" placeholder="email@example.com" autocomplete="email">
+            <button class="btn gold" id="activateBtn">Активировать</button>
+          </div>
+          <p style="font-size:11px;color:var(--muted);margin-top:12px">
+            ⚠️ Если код не подходит — прочитай <a href="#" onclick="switchTab('important');return false" style="color:var(--danger);font-weight:700">🚨 ВАЖНО</a>
+          </p>
+        </div>
+        <div class="plan-grid">
+          <div class="plan">
+            <div class="plan-icon">📅</div>
+            <div class="plan-title">Месяц</div>
+            <div class="plan-price">200 <span class="cur">₽</span></div>
+            <div class="plan-price-sub">в месяц</div>
+            <div class="plan-features"><li>5 Premium-шаблонов</li><li>4 Premium-темы</li><li>Расширенная статистика</li></div>
+            <button class="btn ghost" onclick="selectPlan('month')">Выбрать</button>
+          </div>
+          <div class="plan featured">
+            <div class="plan-badge">🔥 ВЫГОДНО</div>
+            <div class="plan-icon">🎯</div>
+            <div class="plan-title">Год</div>
+            <div class="plan-price">2000 <span class="cur">₽</span></div>
+            <div class="plan-price-sub">в год · экономия 400 ₽</div>
+            <div class="plan-features"><li>Всё из «Месяц»</li><li>2 месяца в подарок</li><li>Приоритетная поддержка</li></div>
+            <button class="btn gold" onclick="selectPlan('year')">Выбрать</button>
+          </div>
+          <div class="plan">
+            <div class="plan-icon">💎</div>
+            <div class="plan-title">Навсегда</div>
+            <div class="plan-price">4499 <span class="cur">₽</span></div>
+            <div class="plan-price-sub">один раз</div>
+            <div class="plan-features"><li>Всё из «Год»</li><li>Пожизненный доступ</li><li>Все будущие функции</li></div>
+            <button class="btn" onclick="selectPlan('forever')">Выбрать</button>
+          </div>
+        </div>
+        <div class="info-card">
+          <h2>✨ Что даёт Premium</h2>
+          <div class="features-grid">
+            <div class="feature-item"><div class="fi-icon">🎁</div><div class="fi-title">5 Premium-шаблонов</div><div class="fi-desc">Deep Work, экзамен, запуск, семейные, отпуск</div></div>
+            <div class="feature-item"><div class="fi-icon">🎨</div><div class="fi-title">4 Premium-темы</div><div class="fi-desc">Gold, Neon, Ocean, Cyberpunk</div></div>
+            <div class="feature-item"><div class="fi-icon">📊</div><div class="fi-title">Расширенная статистика</div><div class="fi-desc">Heatmap, тренды, рекорд streak</div></div>
+            <div class="feature-item"><div class="fi-icon">⏰</div><div class="fi-title">Уведомления</div><div class="fi-desc">Об истечении подписки</div></div>
+            <div class="feature-item"><div class="fi-icon">💬</div><div class="fi-title">Приоритетная поддержка</div><div class="fi-desc">Ответ в течение 24 часов</div></div>
+            <div class="feature-item"><div class="fi-icon">🙏</div><div class="fi-title">Поддержка проекта</div><div class="fi-desc">Помогаешь независимому продукту</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pay-page hidden" id="paymentPage">
+      <div class="pay-step">
+        <h3><span class="step-num">1</span> Переведи сумму по СБП</h3>
+        <div class="info-row"><div class="label">Тариф</div><div class="value" id="payPlan">—</div></div>
+        <div class="info-row"><div class="label">Сумма</div><div class="value" id="payAmount" style="color:var(--gold);font-size:20px;font-weight:900">—</div></div>
+        <div style="margin-top:16px">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:6px">📱 Номер для СБП:</div>
+          <div class="copy-field"><div class="text" id="payPhone">—</div><button class="copy-btn" id="copyPhone">Копировать</button></div>
+        </div>
+        <div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:6px">👤 Получатель:</div><div style="font-size:14px;font-weight:700" id="payName">—</div></div>
+        <div style="margin-top:12px"><div style="font-size:13px;color:var(--muted);margin-bottom:6px">🏦 Банк:</div><div style="font-size:14px;font-weight:700" id="payBank">—</div></div>
+        <div class="pay-note">💡 СБП → номер → сумма <b id="noteAmount">—</b></div>
+        <div class="pay-note" style="background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.3);color:var(--blue)">
+          📝 Комментарий: <b>DayFlow &lt;тариф&gt;</b>
+        </div>
+      </div>
+      <div class="pay-step">
+        <h3><span class="step-num">2</span> Подтверди и укажи email</h3>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px">
+          <b>Важно:</b> укажи email, к которому будет привязан код. Ошибёшься — придётся писать в поддержку.
+        </p>
+        <div class="field">
+          <label>Email для получения кода (и для активации)</label>
+          <input type="email" id="userEmailForCode" placeholder="you@example.com">
+        </div>
+        <button class="btn gold" id="confirmPay">📧 Я оплатил — отправить</button>
+        <button class="btn ghost" id="backToPlans" style="margin-top:8px">← Назад</button>
+      </div>
+      <div class="pay-step" style="background:rgba(239,68,68,.05);border-color:rgba(239,68,68,.3)">
+        <h3 style="color:var(--danger)">⚠️ Прочитай «ВАЖНО»</h3>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6">
+          Код привязан к email. Код можно активировать на всех своих устройствах, но <b>нельзя передать другу</b>. Код может пропасть при очистке браузера — <b>сохрани его!</b>
+        </p>
+        <button class="btn ghost sm" onclick="switchTab('important')" style="margin-top:10px;border-color:var(--danger);color:var(--danger)">🚨 Открыть «ВАЖНО»</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" data-page="settings">
+    <div class="info-wrap">
+      <div class="info-card">
+        <h2>⚙️ Настройки</h2>
+        <h3>🎨 Внешний вид</h3>
+        <div class="set-row">
+          <div class="set-info"><div class="set-name">Тема</div><div class="set-desc">Тёмная / светлая / Premium</div></div>
+          <div class="set-ctrl">
+            <select id="setTheme" style="width:auto">
+              <option value="dark">🌙 Тёмная</option>
+              <option value="light">☀️ Светлая</option>
+              <option value="gold">👑 Gold</option>
+              <option value="neon">👑 Neon</option>
+              <option value="ocean">👑 Ocean</option>
+              <option value="cyberpunk">👑 Cyberpunk</option>
+            </select>
+          </div>
+        </div>
+        <div class="set-row">
+          <div class="set-info"><div class="set-name">Размер шрифта</div><div class="set-desc">Масштаб</div></div>
+          <div class="set-ctrl">
+            <select id="setFont" style="width:auto">
+              <option value="13">Мелкий</option>
+              <option value="14" selected>Средний</option>
+              <option value="16">Крупный</option>
+            </select>
+          </div>
+        </div>
+        <h3>🔔 Уведомления</h3>
+        <div class="set-row">
+          <div class="set-info"><div class="set-name">Звук таймера</div><div class="set-desc">По завершении</div></div>
+          <div class="set-ctrl"><label class="switch"><input type="checkbox" id="setSoundPomo" checked><span class="slider"></span></label></div>
+        </div>
+        <div class="set-row">
+          <div class="set-info"><div class="set-name">Звук действий</div><div class="set-desc">Клик</div></div>
+          <div class="set-ctrl"><label class="switch"><input type="checkbox" id="setSoundActions" checked><span class="slider"></span></label></div>
+        </div>
+        <div class="set-row">
+          <div class="set-info"><div class="set-name">Уведомления браузера</div><div class="set-desc">Напоминания</div></div>
+          <div class="set-ctrl"><label class="switch"><input type="checkbox" id="setNotify"><span class="slider"></span></label></div>
+        </div>
+        <h3>🗂 Данные</h3>
+        <div class="set-row">
+          <div class="set-info"><div class="set-name">Экспорт</div><div class="set-desc">Сохрани данные! Рекомендуется раз в неделю</div></div>
+          <div class="set-ctrl"><button class="btn ghost sm" id="setExport">⬇️ Экспорт</button></div>
+        </div>
+        <div class="set-row">
+          <div class="set-info"><div class="set-name">Импорт</div><div class="set-desc">Из JSON-файла</div></div>
+          <div class="set-ctrl"><button class="btn ghost sm" id="setImport">⬆️ Импорт</button></div>
+        </div>
+        <div class="set-row">
+          <div class="set-info"><div class="set-name">Сброс</div><div class="set-desc">Удалить всё (необратимо!)</div></div>
+          <div class="set-ctrl"><button class="btn danger sm" id="setReset">🗑 Сброс</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="page" data-page="about">
+    <div class="info-wrap">
+      <div class="info-card">
+        <h2>ℹ️ О приложении</h2>
+        <p><b>DayFlow PRO 8.0</b> — умный планировщик с премиум-функциями.</p>
+        <h3>🚀 Возможности</h3>
+        <ul>
+          <li>Задачи с датой, временем, приоритетом, категорией, подзадачами</li>
+          <li>Повторяющиеся задачи</li>
+          <li>Таймер на любое время</li>
+          <li>8 обычных + 5 Premium-шаблонов</li>
+          <li>6 тем (2 обычные + 4 Premium)</li>
+          <li>Расширенная статистика (Premium)</li>
+          <li>👑 Premium: активация по коду + email</li>
+        </ul>
+        <h3>👑 Как активировать Premium</h3>
+        <ol>
+          <li>Выбери тариф и оплати по СБП</li>
+          <li>Отправь чек на artemelcev87@gmail.com + свой email</li>
+          <li>Получи код на этот email</li>
+          <li>Введи код + email в Premium → готово</li>
+        </ol>
+        <h3>⏰ Подписка</h3>
+        <p>Месяц/год истекают автоматически. За 3 дня — уведомление. «Навсегда» — бессрочно.</p>
+        <h3>🚨 Важно</h3>
+        <p>Обязательно прочитай вкладку <a href="#" onclick="switchTab('important');return false" style="color:var(--danger);font-weight:700">🚨 ВАЖНО</a> — там вся критичная информация о кодах.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATOR -->
+  <div class="page" data-page="creator">
+    <div class="info-wrap">
+      <div class="creator-hero">
+        <div class="creator-avatar-big">👨‍💻</div>
+        <div class="creator-name-big">Ёлчев Артём Сергеевич</div>
+        <div class="creator-role-big">Программист · Разработчик · Создатель DayFlow PRO</div>
+        <div class="creator-tagline">
+          Привет! Меня зовут Артём. Я создаю полезные приложения, которые помогают людям организовывать время, держать фокус и делать больше без стресса. DayFlow PRO — один из таких проектов.
+        </div>
+        <div class="creator-achievements">
+          <div class="creator-achievement"><div class="ca-num">🎯</div><div class="ca-lbl">Фокус на пользе</div></div>
+          <div class="creator-achievement"><div class="ca-num">💡</div><div class="ca-lbl">Простые решения</div></div>
+          <div class="creator-achievement"><div class="ca-num">🚀</div><div class="ca-lbl">Развитие</div></div>
+          <div class="creator-achievement"><div class="ca-num">🙏</div><div class="ca-lbl">Уважение ко времени</div></div>
+        </div>
+      </div>
+      <div class="creator-info-grid">
+        <div class="creator-info-card">
+          <h3>🎯 Философия</h3>
+          <p>Хорошее приложение — это не 100 кнопок. Это когда нужные функции там, где их ждёшь. DayFlow именно такой: минимум лишнего, максимум пользы.</p>
+        </div>
+        <div class="creator-info-card">
+          <h3>🛠 Технологии</h3>
+          <p>Чистый HTML + CSS + JavaScript без фреймворков. PWA для офлайна. Все данные — локально в браузере. Приватность — приоритет.</p>
+        </div>
+        <div class="creator-info-card">
+          <h3>💡 Почему DayFlow</h3>
+          <p>Большинство планировщиков либо слишком простые, либо перегруженные. Захотел сделать такой, где всё нужное есть, а лишнего нет.</p>
+        </div>
+        <div class="creator-info-card">
+          <h3>📬 Обратная связь</h3>
+          <p>Идеи, баги или просто «спасибо» — пиши, я читаю всё.</p>
+          <div class="contact-row" style="margin-top:10px;border-color:#06b6d4">
+            <div class="ico">✉️</div>
+            <div style="flex:1;min-width:0">
+              <div class="lbl">Email</div>
+              <a href="mailto:artemelcev87@gmail.com?subject=DayFlow%20PRO">artemelcev87@gmail.com</a>
+            </div>
+            <button class="btn sm" onclick="copyEmail()" style="width:auto;background:#06b6d4">📋</button>
+          </div>
+        </div>
+        <div class="creator-info-card">
+          <h3>💬 Что написать</h3>
+          <ul>
+            <li>🐞 Нашёл баг</li>
+            <li>💭 Идея функции</li>
+            <li>👑 Вопрос по Premium</li>
+            <li>🎨 Улучшение дизайна</li>
+            <li>🙏 Спасибо</li>
+          </ul>
+        </div>
+        <div class="creator-info-card">
+          <h3>📅 Версия</h3>
+          <p><b>DayFlow PRO 8.0</b><br>2025 год</p>
+          <p style="margin-top:8px">Premium-пользователи получают доступ к новым функциям раньше всех.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="page" data-page="admin">
+    <div class="info-wrap">
+      <div class="info-card" style="border-color:var(--red)">
+        <h2 style="color:var(--red)">🔧 Админ-панель</h2>
+
+        <div class="admin-stats">
+          <div class="admin-stat"><div class="as-label">Задач</div><div class="as-val" id="adminTotalTasks">0</div></div>
+          <div class="admin-stat"><div class="as-label">Premium</div><div class="as-val" id="adminPremiumStatus">—</div></div>
+          <div class="admin-stat"><div class="as-label">Тариф</div><div class="as-val" id="adminPlan">—</div></div>
+          <div class="admin-stat"><div class="as-label">До</div><div class="as-val" id="adminUntil" style="font-size:14px">—</div></div>
+          <div class="admin-stat"><div class="as-label">Кодов активно</div><div class="as-val green" id="adminCodesCount">0</div></div>
+          <div class="admin-stat"><div class="as-label">Использовано</div><div class="as-val red" id="adminCodesUsed">0</div></div>
+          <div class="admin-stat"><div class="as-label">Всего активаций</div><div class="as-val gold" id="adminTotalHistory">0</div></div>
+          <div class="admin-stat"><div class="as-label">Сегодня</div><div class="as-val" id="adminTodayHistory">0</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px">
+          <div class="admin-stat" style="text-align:center"><div class="as-label">Месяц</div><div class="as-val" id="statMonth" style="color:var(--accent)">0</div></div>
+          <div class="admin-stat" style="text-align:center"><div class="as-label">Год</div><div class="as-val" id="statYear" style="color:var(--green)">0</div></div>
+          <div class="admin-stat" style="text-align:center"><div class="as-label">Навсегда</div><div class="as-val" id="statForever" style="color:var(--gold)">0</div></div>
+        </div>
+
+        <!-- ГЕНЕРАТОР -->
+        <div style="background:rgba(251,191,36,.05);border:2px solid var(--gold);border-radius:var(--radius);padding:18px;margin-top:14px">
+          <h3 style="color:var(--gold);margin-top:0">🔑 Генератор кодов</h3>
+          <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">
+            Сгенерируй код + email покупателя. Код активируется только с этим email.
+          </p>
+          <div class="row" style="gap:8px;margin-bottom:10px">
+            <div class="field" style="margin:0">
+              <label>Тариф</label>
+              <select id="genPlan">
+                <option value="m">📅 Месяц (200 ₽)</option>
+                <option value="y">🎯 Год (2000 ₽)</option>
+                <option value="f">💎 Навсегда (4499 ₽)</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0">
+              <label>Сколько</label>
+              <input type="number" id="genCount" min="1" max="50" value="1">
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:10px">
+            <label>Email покупателя (обязательно)</label>
+            <input type="email" id="genBuyerEmail" placeholder="customer@example.com">
+          </div>
+          <button class="btn gold" id="genBtn">✨ Сгенерировать</button>
+
+          <!-- ПОИСК + ФИЛЬТРЫ -->
+          <div class="row" style="gap:8px;margin-top:14px">
+            <div class="field" style="margin:0">
+              <label>Поиск по коду/email</label>
+              <input type="text" id="codeSearch" placeholder="DF-Y-... или email">
+            </div>
+            <div class="field" style="margin:0">
+              <label>Статус</label>
+              <select id="codeFilterStatus">
+                <option value="all">Все</option>
+                <option value="active">Активные</option>
+                <option value="used">Использованные</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label>Тариф</label>
+            <select id="codeFilterPlan">
+              <option value="all">Все тарифы</option>
+              <option value="m">Месяц</option>
+              <option value="y">Год</option>
+              <option value="f">Навсегда</option>
+            </select>
+          </div>
+
+          <div class="gen-codes-list" id="genCodesList"></div>
+
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn ghost sm" id="copyAllCodes">📋 Копировать все</button>
+            <button class="btn ghost sm" id="copyActiveCodes">📋 Только активные</button>
+            <button class="btn ghost sm" id="downloadCodes">⬇️ Скачать .txt</button>
+            <button class="btn ghost sm" id="importCodesBtn">⬆️ Импорт .txt</button>
+            <input type="file" id="importCodesFile" accept=".txt" class="hidden">
+            <button class="btn danger sm" id="clearUsedCodes">🧹 Удалить использованные</button>
+            <button class="btn danger sm" id="clearCodes">🗑 Очистить всё</button>
+          </div>
+
+          <p style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5">
+            📌 <b>EmailJS:</b> <span id="emailjsStatus">не настроен</span>
+          </p>
+        </div>
+
+        <!-- ИСТОРИЯ ПОДПИСОК -->
+        <div style="background:rgba(56,189,248,.05);border:2px solid var(--blue);border-radius:var(--radius);padding:18px;margin-top:20px">
+          <h3 style="color:var(--blue);margin-top:0">📚 История подписок</h3>
+          <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">
+            Каждая активация записывается <b>навсегда</b> с email, тарифом и датой. Никогда не пропадает.
+          </p>
+
+          <div class="row" style="gap:8px;margin-bottom:10px">
+            <div class="field" style="margin:0">
+              <label>Поиск по email/коду</label>
+              <input type="text" id="historySearch" placeholder="email или код">
+            </div>
+            <div class="field" style="margin:0">
+              <label>Тариф</label>
+              <select id="historyFilterPlan">
+                <option value="all">Все</option>
+                <option value="m">Месяц</option>
+                <option value="y">Год</option>
+                <option value="f">Навсегда</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="history-list" id="historyList"></div>
+
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn ghost sm" id="exportHistoryCSV">📊 Экспорт CSV</button>
+            <button class="btn ghost sm" id="exportHistoryJSON">📦 Экспорт JSON</button>
+            <button class="btn danger sm" id="clearHistory">🗑 Очистить историю</button>
+          </div>
+        </div>
+
+        <!-- СВОЯ ПОДПИСКА -->
+        <h3 style="color:var(--red);margin-top:20px">Своя подписка (для теста)</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+          <div class="row" style="gap:8px">
+            <button class="btn ghost" id="adminGrantMonth">➕ Месяц</button>
+            <button class="btn ghost" id="adminGrantYear">➕ Год</button>
+          </div>
+          <div class="row" style="gap:8px">
+            <button class="btn gold" id="adminGrantForever">💎 Навсегда</button>
+            <button class="btn danger" id="adminRevoke">❌ Забрать</button>
+          </div>
+        </div>
+
+        <h3 style="color:var(--red);margin-top:20px">Опасное</h3>
+        <div class="admin-actions">
+          <button class="btn danger sm" id="adminExportAll">📦 Экспорт всего</button>
+          <button class="btn danger sm" id="adminResetAll">🗑 Полный сброс</button>
+          <button class="btn danger sm" id="adminLogout">🚪 Выйти</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORTANT — в самом конце -->
+  <div class="page" data-page="important">
+    <div class="info-wrap">
+      <div class="important-hero">
+        <span class="warn-icon">⚠️</span>
+        <h1>ВАЖНО ПРО КОДЫ АКТИВАЦИИ</h1>
+        <p>Прочитай <b>обязательно</b> перед покупкой Premium. Здесь вся критичная информация о кодах: как они работают, что может пойти не так и как себя обезопасить.</p>
+      </div>
+
+      <div class="important-section critical">
+        <h2>🚨 Код может ПРОПАСТЬ — сохрани его!</h2>
+        <p>Код активации — это <strong>единственный ключ к твоему Premium</strong>. Если потеряешь — восстановить будет <strong>очень сложно</strong>.</p>
+        <div class="warning-box">
+          <b>Что может случиться:</b>
+          <ul style="margin-top:8px;margin-bottom:0">
+            <li>Очистил кэш браузера → код стёрся</li>
+            <li>Удалил cookies / данные сайтов → код стёрся</li>
+            <li>Переустановил браузер → код стёрся</li>
+            <li>Сменил телефон / компьютер → кода нет</li>
+            <li>Режим «инкогнито» → после закрытия всё исчезло</li>
+          </ul>
+        </div>
+        <p><strong>✅ Что делать:</strong></p>
+        <ol>
+          <li>Сразу после получения — <b>сохрани код в заметки</b> на телефоне / email / облако</li>
+          <li>Сделай <b>скриншот письма</b> с кодом</li>
+          <li>Перешли письмо себе на другой email</li>
+          <li>Запиши в <b>Google Keep / Notion / Заметки</b></li>
+        </ol>
+      </div>
+
+      <div class="important-section critical">
+        <h2>📧 Код привязан к твоему EMAIL</h2>
+        <p>При покупке Premium ты указываешь email. Код генерируется <strong>именно для этого email</strong> — и активируется только с ним.</p>
+        <div class="warning-box">
+          <b>Что это значит:</b>
+          <ul style="margin-top:8px;margin-bottom:0">
+            <li>При активации нужно ввести <b>тот же email</b>, что при покупке</li>
+            <li>Ошибёшься на 1 букву — <strong>код не сработает</strong></li>
+            <li>Не сможешь активировать на чужой email</li>
+            <li>На новом устройстве — введи <b>тот же email</b></li>
+          </ul>
+        </div>
+        <p><strong>✅ Что делать:</strong> при покупке указывай email <b>внимательно</b>. Если ошибся — пиши на <a href="mailto:artemelcev87@gmail.com" style="color:var(--danger);font-weight:700">artemelcev87@gmail.com</a> с темой «Ошибка в email» — выдам новый код.</p>
+      </div>
+
+      <div class="important-section">
+        <h2>🔐 Один код = один email = бесконечно устройств</h2>
+        <p>Хорошая новость: <strong>код можно активировать на всех своих устройствах</strong> с одним и тем же email. Купил один раз — пользуешься везде.</p>
+        <ul>
+          <li>✅ ПК + телефон + планшет — работает</li>
+          <li>✅ Chrome + Firefox на одном ПК — работает</li>
+          <li>❌ Передать другу — <strong>не сработает</strong></li>
+        </ul>
+      </div>
+
+      <div class="important-section">
+        <h2>📱 На каждом устройстве — активируй заново</h2>
+        <p>Код нужно <strong>ввести на каждом устройстве отдельно</strong>. Данные <b>не синхронизируются</b> автоматически.</p>
+        <p><strong>Алгоритм для 2-го устройства:</strong></p>
+        <ol>
+          <li>Открой DayFlow на новом устройстве</li>
+          <li>👑 Premium → «Активация по коду»</li>
+          <li>Введи <b>тот же код</b></li>
+          <li>Введи <b>тот же email</b></li>
+          <li>Готово</li>
+        </ol>
+      </div>
+
+      <div class="important-section">
+        <h2>⏰ Срок действия подписки</h2>
+        <ul>
+          <li><b>Месяц</b> — ровно 30 дней, потом отключается автоматически</li>
+          <li><b>Год</b> — ровно 365 дней, потом отключается автоматически</li>
+          <li><b>Навсегда</b> — работает бессрочно, никогда не отключается</li>
+        </ul>
+        <div class="warning-box">
+          <b>Внимание:</b> после истечения срока <b>задачи, шаблоны, настройки не удаляются</b> — теряется только доступ к Premium-функциям.
+        </div>
+        <p><strong>✅ Что делать:</strong> за 3 дня до окончания появится <b>предупреждение</b> в шапке. Продли новым кодом.</p>
+      </div>
+
+      <div class="important-section critical">
+        <h2>💾 Сделай экспорт данных СЕЙЧАС</h2>
+        <p>В настройках (⚙️) → <b>«Экспорт»</b> — скачивается JSON-файл с <b>всеми твоими задачами</b>. Делай это раз в неделю.</p>
+        <div class="warning-box">
+          <b>Почему это критично:</b>
+          <ul style="margin-top:8px;margin-bottom:0">
+            <li>Очистишь браузер — <b>задачи и код пропадут</b></li>
+            <li>Экспорт — единственный способ сохранить</li>
+            <li>Импорт обратно — восстановит всё</li>
+            <li>Храни файл в облаке / на флешке</li>
+          </ul>
+        </div>
+        <p><strong>✅ Правило:</strong> <b>раз в неделю</b> — экспорт. Всегда.</p>
+      </div>
+
+      <div class="important-section">
+        <h2>📬 Обратная связь</h2>
+        <p>Если что-то с кодом пошло не так — пиши:</p>
+        <div class="contact-row" style="border-color:var(--danger)">
+          <div class="ico">✉️</div>
+          <div style="flex:1;min-width:0">
+            <div class="lbl">Email поддержки</div>
+            <a href="mailto:artemelcev87@gmail.com?subject=Проблема%20с%20кодом%20DayFlow" style="color:var(--danger)">artemelcev87@gmail.com</a>
+          </div>
+          <button class="btn sm" onclick="copyEmail()" style="width:auto;background:var(--danger)">📋</button>
+        </div>
+        <p style="margin-top:12px"><strong>Что указать в письме:</strong></p>
+        <ul>
+          <li>Твой код (если сохранился)</li>
+          <li>Email, на который покупал</li>
+          <li>Дату покупки / сумму</li>
+          <li>Что произошло (пропал код, не активируется, ошибся в email)</li>
+        </ul>
+      </div>
+
+      <div class="important-section">
+        <h2>✅ Краткая памятка</h2>
+        <ul>
+          <li>💾 <b>Сохрани код</b> в заметки / email / облако</li>
+          <li>📧 <b>Запомни email</b>, на который покупал</li>
+          <li>📱 На новом устройстве — <b>введи код + email заново</b></li>
+          <li>⏰ Следи за <b>сроком подписки</b></li>
+          <li>💾 Делай <b>экспорт данных раз в неделю</b></li>
+          <li>📬 При проблемах — <b>пиши на email</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="admin-panel">
+  <button class="admin-trigger" id="adminTrigger" title="🔧">🔧</button>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toastText">Готово</span></div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">Подтверждение</h3>
+    <p id="modalText" style="color:var(--muted);font-size:13px;line-height:1.5"></p>
+    <div class="actions">
+      <button class="btn ghost" id="modalCancel">Отмена</button>
+      <button class="btn danger" id="modalOk">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+window.DAYFLOW_CONFIG = {
+  phone: '+79854675897',
+  bank: 'Т-Банк',
+  receiverName: 'Артём Сергеевич Ё.',
+  email: 'artemelcev87@gmail.com',
+  prices: { month: 200, year: 2000, forever: 4499 },
+  planNames: { month: 'Месяц', year: 'Год', forever: 'Навсегда' },
+  adminPassword: 'admin2025',
+  activationSecret: 'DF-SECRET-ARTEM-2025-XK9mP2nQ7vL4wR8tY6zA3bC5dE',
+  emailjs: { enabled: false },
+  expiryWarningDays: 3,
+  version: '8.0'
+};
+</script>
+<script>
+/* ============================================================
+   CONFIG
+============================================================ */
+const CFG = window.DAYFLOW_CONFIG || {};
+const PREMIUM_CONFIG = {
+  phone: CFG.phone || '+79001234567',
+  bank: CFG.bank || 'Сбербанк',
+  receiverName: CFG.receiverName || 'Артём Ё.',
+  email: CFG.email || 'artemelcev87@gmail.com',
+  prices: CFG.prices || { month: 200, year: 2000, forever: 4499 },
+  planNames: CFG.planNames || { month: 'Месяц', year: 'Год', forever: 'Навсегда' }
+};
+function _dec(s) { try { return atob(s); } catch { return ''; } }
+const ACTIVATION_SECRET = _dec(CFG._s || btoa(CFG.activationSecret || 'DF-SECRET-DEFAULT'));
+const ADMIN_PASSWORD = CFG.adminPassword || 'admin2025';
+const EMAILJS_CONFIG = CFG.emailjs || { enabled: false };
+const EXPIRY_WARNING_DAYS = CFG.expiryWarningDays || 3;
+
+if (EMAILJS_CONFIG.enabled && typeof emailjs !== 'undefined') {
+  try { emailjs.init(EMAILJS_CONFIG.publicKey); } catch (e) { console.warn('EmailJS init', e); }
+}
+
+const STORAGE_KEY = 'dayflow_pro_tasks_v2';
+const SETTINGS_KEY = 'dayflow_settings_v1';
+const STREAK_KEY = 'dayflow_streak';
+const STREAK_RECORD_KEY = 'dayflow_streak_record';
+const PREMIUM_KEY = 'dayflow_premium';
+const ADMIN_KEY = 'dayflow_admin';
+const CODES_KEY = 'dayflow_codes';
+const USED_CODES_KEY = 'dayflow_used_codes';
+const HISTORY_KEY = 'dayflow_history';
+
+const CATS = {
+  work: { name: 'Работа', icon: '💼', color: '#6c8cff' },
+  personal: { name: 'Личное', icon: '🏠', color: '#a855f7' },
+  study: { name: 'Учёба', icon: '📚', color: '#34d399' },
+  health: { name: 'Здоровье', icon: '💪', color: '#f87171' },
+  other: { name: 'Другое', icon: '📦', color: '#38bdf8' }
+};
+
+const TEMPLATES = [
+  { id: 'morning', icon: '🌅', title: 'Утренняя рутина', desc: 'Начни день правильно.', tasks: [
+    { title: 'Выпить стакан воды', time: '07:00', priority: 'medium', category: 'health' },
+    { title: 'Зарядка 10 минут', time: '07:10', priority: 'medium', category: 'health' },
+    { title: 'Душ и завтрак', time: '07:30', priority: 'low', category: 'personal' },
+    { title: 'Планирование дня', time: '08:00', priority: 'high', category: 'work' }
+  ]},
+  { id: 'workday', icon: '💼', title: 'Рабочий день', desc: 'Продуктивная работа.', tasks: [
+    { title: 'Проверить почту', time: '09:00', priority: 'medium', category: 'work' },
+    { title: 'Планёрка', time: '09:30', priority: 'high', category: 'work' },
+    { title: 'Глубокая работа', time: '10:00', priority: 'high', category: 'work' },
+    { title: 'Обед', time: '13:00', priority: 'low', category: 'personal' },
+    { title: 'Созвоны', time: '14:00', priority: 'medium', category: 'work' },
+    { title: 'Итоги дня', time: '18:00', priority: 'medium', category: 'work' }
+  ]},
+  { id: 'study', icon: '📚', title: 'Учебный день', desc: 'Эффективная учёба.', tasks: [
+    { title: 'Повторить', time: '09:00', priority: 'medium', category: 'study' },
+    { title: 'Новая тема', time: '10:00', priority: 'high', category: 'study' },
+    { title: 'Практика', time: '12:00', priority: 'high', category: 'study' },
+    { title: 'Прогулка', time: '14:00', priority: 'low', category: 'health' },
+    { title: 'Конспект', time: '15:00', priority: 'medium', category: 'study' }
+  ]},
+  { id: 'sport', icon: '💪', title: 'Спортивный день', desc: 'Тренировка.', tasks: [
+    { title: 'Зарядка', time: '07:30', priority: 'medium', category: 'health' },
+    { title: 'Тренировка', time: '18:00', priority: 'high', category: 'health' },
+    { title: 'Растяжка', time: '19:30', priority: 'medium', category: 'health' }
+  ]},
+  { id: 'cleaning', icon: '🧹', title: 'Уборка', desc: 'Порядок дома.', tasks: [
+    { title: 'Кухня', time: '', priority: 'high', category: 'personal' },
+    { title: 'Ванная', time: '', priority: 'high', category: 'personal' },
+    { title: 'Пылесос', time: '', priority: 'medium', category: 'personal' },
+    { title: 'Стирка', time: '', priority: 'medium', category: 'personal' }
+  ]},
+  { id: 'travel', icon: '✈️', title: 'Сборы', desc: 'Ничего не забудь.', tasks: [
+    { title: 'Документы', time: '', priority: 'high', category: 'other' },
+    { title: 'Зарядить технику', time: '', priority: 'medium', category: 'other' },
+    { title: 'Аптечка', time: '', priority: 'medium', category: 'health' },
+    { title: 'Офлайн-карты', time: '', priority: 'medium', category: 'other' }
+  ]},
+  { id: 'review', icon: '📊', title: 'Недельный обзор', desc: 'Итоги недели.', tasks: [
+    { title: 'Просмотреть задачи', time: '', priority: 'medium', category: 'work' },
+    { title: 'Анализ', time: '', priority: 'high', category: 'work' },
+    { title: 'Цели на неделю', time: '', priority: 'high', category: 'work' }
+  ]},
+  { id: 'selfcare', icon: '🧘', title: 'Забота о себе', desc: 'Отдых.', tasks: [
+    { title: 'Медитация', time: '08:00', priority: 'medium', category: 'health' },
+    { title: 'Прогулка', time: '12:00', priority: 'medium', category: 'health' },
+    { title: 'Хобби', time: '16:00', priority: 'low', category: 'personal' },
+    { title: 'Ранний сон', time: '22:00', priority: 'high', category: 'health' }
+  ]},
+  { id: 'deep-work', icon: '🎯', title: 'Deep Work', desc: 'Максимальная концентрация.', premium: true, tasks: [
+    { title: 'Обзор целей', time: '08:00', priority: 'high', category: 'work' },
+    { title: 'Блок 1: 90 мин', time: '09:00', priority: 'high', category: 'work' },
+    { title: 'Перерыв', time: '10:30', priority: 'medium', category: 'health' },
+    { title: 'Блок 2: 90 мин', time: '10:45', priority: 'high', category: 'work' },
+    { title: 'Обед', time: '12:15', priority: 'low', category: 'personal' },
+    { title: 'Блок 3: 90 мин', time: '13:15', priority: 'high', category: 'work' },
+    { title: 'Рефлексия', time: '17:00', priority: 'medium', category: 'work' }
+  ]},
+  { id: 'exam', icon: '🎓', title: 'Экзамен', desc: 'Эффективная подготовка.', premium: true, tasks: [
+    { title: 'Конспекты', time: '09:00', priority: 'high', category: 'study' },
+    { title: '10 задач', time: '10:30', priority: 'high', category: 'study' },
+    { title: 'Разбор ошибок', time: '12:00', priority: 'high', category: 'study' },
+    { title: 'Обед', time: '13:00', priority: 'low', category: 'health' },
+    { title: 'Пробный тест', time: '14:30', priority: 'high', category: 'study' },
+    { title: 'Анализ', time: '16:30', priority: 'medium', category: 'study' }
+  ]},
+  { id: 'launch', icon: '🚀', title: 'Запуск проекта', desc: 'Чек-лист.', premium: true, tasks: [
+    { title: 'Тестирование', time: '', priority: 'high', category: 'work' },
+    { title: 'Анонс', time: '', priority: 'high', category: 'work' },
+    { title: 'Аналитика', time: '', priority: 'high', category: 'work' },
+    { title: 'Соцсети', time: '', priority: 'high', category: 'work' },
+    { title: 'Email-рассылка', time: '', priority: 'medium', category: 'work' }
+  ]},
+  { id: 'family-weekend', icon: '👨‍👩‍👧', title: 'Семейные выходные', desc: 'С семьёй.', premium: true, tasks: [
+    { title: 'Завтрак', time: '09:00', priority: 'medium', category: 'personal' },
+    { title: 'Прогулка', time: '11:00', priority: 'medium', category: 'personal' },
+    { title: 'Настольные игры', time: '15:00', priority: 'low', category: 'personal' },
+    { title: 'Ужин', time: '19:00', priority: 'medium', category: 'personal' }
+  ]},
+  { id: 'vacation-prep', icon: '🏖', title: 'К отпуску', desc: 'Всё успеть.', premium: true, tasks: [
+    { title: 'Закрыть задачи', time: '', priority: 'high', category: 'work' },
+    { title: 'Передать дела', time: '', priority: 'high', category: 'work' },
+    { title: 'Забронировать', time: '', priority: 'high', category: 'other' },
+    { title: 'Чемодан', time: '', priority: 'medium', category: 'personal' }
+  ]}
+];
+
+let tasks = [];
+let filter = 'all';
+let catFilter = 'all';
+let currentCat = 'work';
+let searchQuery = '';
+let sortMode = 'time';
+let settings = { theme: 'dark', fontSize: 14, soundPomo: true, soundActions: true, notify: false };
+let premium = { active: false, plan: null, until: null, email: null };
+let isAdmin = false;
+let generatedCodes = [];
+let history = [];
+
+const $ = id => document.getElementById(id);
+const listEl = $('taskList');
+
+/* ============================================================
+   UTILS
+============================================================ */
+function todayStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function prettyDate(dateStr) {
+  if (!dateStr) return '';
+  if (dateStr === todayStr()) return 'Сегодня';
+  const d = new Date(dateStr + 'T00:00:00');
+  const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function isOverdue(t) {
+  if (t.done || !t.date) return false;
+  return new Date(t.date + 'T' + (t.time || '23:59')) < new Date();
+}
+function formatPrice(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
+function daysUntil(dateStr) {
+  if (!dateStr) return Infinity;
+  return Math.ceil((new Date(dateStr + 'T23:59:59') - new Date()) / 86400000);
+}
+function detectDevice() {
+  const ua = navigator.userAgent;
+  let browser = 'Браузер';
+  if (ua.includes('Chrome')) browser = 'Chrome';
+  else if (ua.includes('Firefox')) browser = 'Firefox';
+  else if (ua.includes('Safari')) browser = 'Safari';
+  else if (ua.includes('Edge')) browser = 'Edge';
+  let os = 'Устройство';
+  if (ua.includes('Windows')) os = 'Windows';
+  else if (ua.includes('Mac')) os = 'Mac';
+  else if (ua.includes('Android')) os = 'Android';
+  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+  else if (ua.includes('Linux')) os = 'Linux';
+  return `${browser}/${os}`;
+}
+
+/* ============================================================
+   🔑 КОДЫ
+============================================================ */
+function hashCode(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
+  return String(h % 100000).padStart(5, '0');
+}
+function normalizeEmail(email) { return (email || '').trim().toLowerCase(); }
+function generateCode(plan, num, email) {
+  const planCode = { month: 'M', year: 'Y', forever: 'F' }[plan];
+  if (!planCode) return null;
+  const numStr = String(num).padStart(5, '0');
+  const emailNorm = normalizeEmail(email);
+  const hash = hashCode(planCode + numStr + emailNorm + ACTIVATION_SECRET);
+  return `DF-${planCode}-${numStr}-${hash}`;
+}
+function validateCode(code, email) {
+  code = code.trim().toUpperCase();
+  const emailNorm = normalizeEmail(email);
+  const m = code.match(/^DF-([MYF])-(\d{5})-(\d{5})$/);
+  if (!m) return { valid: false, reason: 'Неверный формат кода' };
+  const [, planCode, numStr, hash] = m;
+  const expected = hashCode(planCode + numStr + emailNorm + ACTIVATION_SECRET);
+  if (hash !== expected) return { valid: false, reason: 'Код не подходит к этому email' };
+  if (JSON.parse(localStorage.getItem(USED_CODES_KEY) || '[]').includes(code)) return { valid: false, reason: 'Код уже активирован' };
+  return { valid: true, plan: { M: 'month', Y: 'year', F: 'forever' }[planCode] };
+}
+
+/* ============================================================
+   STORAGE
+============================================================ */
+function loadTasks() {
+  try { tasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { tasks = []; }
+  if (!tasks.length) seedDemo();
+  saveTasks();
+}
+function saveTasks() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  updateStreak();
+}
+function seedDemo() {
+  const today = todayStr();
+  tasks = [
+    { id: 1, title: 'Созвон с командой', date: today, time: '10:00', priority: 'high', note: 'Обсудить релиз', category: 'work', repeat: '', done: false, pinned: false, subtasks: [{text:'Отчёт',done:true},{text:'Метрики',done:false}], created: Date.now() },
+    { id: 2, title: 'Тренировка', date: today, time: '18:00', priority: 'medium', note: '', category: 'health', repeat: 'daily', done: false, pinned: false, subtasks: [], created: Date.now() },
+    { id: 3, title: 'Прочитать главу', date: today, time: '', priority: 'low', note: '', category: 'study', repeat: '', done: true, pinned: false, subtasks: [], created: Date.now() }
+  ];
+}
+function loadSettings() {
+  try { const s = JSON.parse(localStorage.getItem(SETTINGS_KEY)); if (s) settings = { ...settings, ...s }; } catch {}
+}
+function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+function loadPremium() {
+  try { const p = JSON.parse(localStorage.getItem(PREMIUM_KEY)); if (p) premium = { ...premium, ...p }; } catch {}
+  if (premium.active && premium.plan !== 'forever' && premium.until && new Date(premium.until) < new Date()) {
+    premium = { active: false, plan: null, until: null, email: null };
+    localStorage.setItem(PREMIUM_KEY, JSON.stringify(premium));
+  }
+  updatePremiumUI();
+  checkExpiryWarning();
+}
+function savePremium() {
+  localStorage.setItem(PREMIUM_KEY, JSON.stringify(premium));
+  updatePremiumUI();
+  checkExpiryWarning();
+}
+function loadCodes() {
+  try { generatedCodes = JSON.parse(localStorage.getItem(CODES_KEY)) || []; } catch { generatedCodes = []; }
+}
+function saveCodes() { localStorage.setItem(CODES_KEY, JSON.stringify(generatedCodes)); }
+
+/* ============================================================
+   📚 ИСТОРИЯ ПОДПИСОК
+============================================================ */
+function loadHistory() {
+  try { history = JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { history = []; }
+}
+function saveHistory() { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); }
+function addToHistory(entry) {
+  history.push({ ...entry, timestamp: Date.now() });
+  saveHistory();
+}
+
+/* ============================================================
+   PREMIUM UI
+============================================================ */
+function updatePremiumUI() {
+  const badge = $('premiumBadge');
+  if (premium.active) {
+    badge.classList.remove('hidden');
+    $('alreadyPremium').classList.remove('hidden');
+    $('noPremium').classList.add('hidden');
+    $('activePlan').textContent = PREMIUM_CONFIG.planNames[premium.plan] || '—';
+    $('activeUntil').textContent = premium.plan === 'forever' ? '∞ навсегда' : (premium.until || '—');
+    if ($('activeEmail')) $('activeEmail').textContent = premium.email || '—';
+  } else {
+    badge.classList.add('hidden');
+    $('alreadyPremium').classList.add('hidden');
+    $('noPremium').classList.remove('hidden');
+  }
+  renderTemplates();
+  if (typeof renderStats === 'function') renderStats();
+}
+function checkExpiryWarning() {
+  const banner = $('expiryBanner');
+  if (!premium.active || premium.plan === 'forever') { banner.classList.remove('show'); return; }
+  const days = daysUntil(premium.until);
+  if (days <= EXPIRY_WARNING_DAYS && days >= 0) {
+    banner.classList.add('show');
+    $('expiryText').textContent = `Осталось ${days} ${plural(days, 'день','дня','дней')}. Продлите, чтобы не потерять доступ.`;
+  } else {
+    banner.classList.remove('show');
+  }
+}
+function plural(n, one, few, many) {
+  const mod10 = n % 10, mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
+}
+
+/* ============================================================
+   STREAK
+============================================================ */
+function updateStreak() {
+  const s = JSON.parse(localStorage.getItem(STREAK_KEY) || '{"last":"","count":0}');
+  const t = todayStr();
+  if (s.last !== t && tasks.some(x => x.done && x.date === t)) {
+    const y = new Date(); y.setDate(y.getDate()-1);
+    s.count = (s.last === todayStr(y)) ? s.count + 1 : 1;
+    s.last = t;
+    localStorage.setItem(STREAK_KEY, JSON.stringify(s));
+    const rec = +(localStorage.getItem(STREAK_RECORD_KEY) || 0);
+    if (s.count > rec) localStorage.setItem(STREAK_RECORD_KEY, s.count);
+  }
+  $('statStreak').textContent = s.count + ' 🔥';
+}
+
+/* ============================================================
+   AUDIO / TOAST / MODAL
+============================================================ */
+function beep(freq = 880, dur = 0.5, vol = 0.2) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = freq; o.type = 'sine';
+    g.gain.setValueAtTime(vol, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    o.start(); o.stop(ctx.currentTime + dur);
+  } catch {}
+}
+let toastTimer;
+function toast(msg) {
+  $('toastText').textContent = msg;
+  $('toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+}
+function closeModal() {
+  $('modalBg').classList.remove('show');
+  $('modalOk').textContent = 'Удалить';
+  $('modalOk').className = 'btn danger';
+  $('modalOk').onclick = null;
+  $('modalCancel').textContent = 'Отмена';
+}
+
+/* ============================================================
+   THEME
+============================================================ */
+const PREMIUM_THEMES = ['gold', 'neon', 'ocean', 'cyberpunk'];
+function applyTheme(th) {
+  if (PREMIUM_THEMES.includes(th) && !premium.active && !isAdmin) {
+    toast('👑 Эта тема — Premium');
+    $('setTheme').value = settings.theme;
+    return;
+  }
+  document.body.dataset.theme = th;
+  $('themeBtn').textContent = th === 'light' ? '☀️' : '🌙';
+  settings.theme = th; saveSettings();
+  if ($('setTheme')) $('setTheme').value = th;
+}
+function applyFont(size) {
+  document.documentElement.style.setProperty('--font-size', size + 'px');
+  settings.fontSize = size; saveSettings();
+  if ($('setFont')) $('setFont').value = size;
+}
+function tickClock() {
+  const d = new Date();
+  $('clock').textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+}
+
+/* ============================================================
+   RENDER TASKS
+============================================================ */
+function render() {
+  const total = tasks.length;
+  const done = tasks.filter(t => t.done).length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  $('statTotal').textContent = total;
+  $('statDone').textContent = done;
+  $('statLeft').textContent = total - done;
+  $('statOverdue').textContent = tasks.filter(isOverdue).length;
+  $('statPct').textContent = pct + '%';
+  $('progressFill').style.width = pct + '%';
+  $('progressText').textContent = `${done} / ${total}`;
+
+  let visible = tasks.slice();
+  if (filter === 'active') visible = visible.filter(t => !t.done);
+  else if (filter === 'done') visible = visible.filter(t => t.done);
+  else if (filter === 'overdue') visible = visible.filter(isOverdue);
+  else if (filter === 'today') visible = visible.filter(t => t.date === todayStr());
+  else if (filter === 'week') {
+    const end = new Date(); end.setDate(end.getDate()+7);
+    visible = visible.filter(t => t.date && new Date(t.date) >= new Date(todayStr()) && new Date(t.date) <= end);
+  }
+  else if (filter === 'pinned') visible = visible.filter(t => t.pinned);
+  if (catFilter !== 'all') visible = visible.filter(t => t.category === catFilter);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    visible = visible.filter(t => t.title.toLowerCase().includes(q) || (t.note||'').toLowerCase().includes(q));
+  }
+  const prOrder = { high: 0, medium: 1, low: 2 };
+  visible.sort((a,b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    if (sortMode === 'priority') return prOrder[a.priority] - prOrder[b.priority];
+    if (sortMode === 'created') return (b.created||0) - (a.created||0);
+    if (sortMode === 'alpha') return a.title.localeCompare(b.title, 'ru');
+    if (a.date !== b.date) return (a.date||'').localeCompare(b.date||'');
+    if (a.time && b.time) return a.time.localeCompare(b.time);
+    if (a.time) return -1;
+    if (b.time) return 1;
+    return prOrder[a.priority] - prOrder[b.priority];
+  });
+
+  listEl.innerHTML = '';
+  if (!visible.length) {
+    listEl.innerHTML = `<div class="empty"><div class="em">${filter==='done'?'📭':'🌤'}</div><div>${filter==='done'?'Нет выполненных':'Добавь первую задачу!'}</div></div>`;
+  } else {
+    const prLabel = { low: 'Низкий', medium: 'Средний', high: 'Высокий' };
+    visible.forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'task' + (t.done ? ' completed' : '') + (t.pinned ? ' pinned' : '');
+      el.dataset.priority = t.priority;
+      const od = isOverdue(t);
+      const cat = CATS[t.category] || CATS.other;
+      const subDone = (t.subtasks||[]).filter(s=>s.done).length;
+      const subTotal = (t.subtasks||[]).length;
+      const subPct = subTotal ? Math.round(subDone/subTotal*100) : 0;
+      const repeatLabel = { daily:'Ежедн.', weekdays:'Будни', weekly:'Еженед.', monthly:'Ежемес.' }[t.repeat] || '';
+      const dateLabel = t.date ? prettyDate(t.date) : '';
+      const isToday = t.date === todayStr();
+      el.innerHTML = `
+        <div class="checkbox ${t.done ? 'checked' : ''}" data-act="toggle"></div>
+        <div class="task-body">
+          <div class="task-title">${t.pinned ? '<span>📌</span>' : ''}${escapeHtml(t.title)}</div>
+          <div class="task-meta">
+            ${t.time ? `<span class="tag">🕐 ${t.time}</span>` : ''}
+            ${dateLabel ? `<span class="tag ${isToday?'date-today':''}">📅 ${dateLabel}</span>` : ''}
+            <span class="tag p-${t.priority}">${prLabel[t.priority]}</span>
+            <span class="tag">${cat.icon} ${cat.name}</span>
+            ${od ? '<span class="tag overdue">⚠ Просрочено</span>' : ''}
+            ${repeatLabel ? `<span class="tag repeat">🔁 ${repeatLabel}</span>` : ''}
+          </div>
+          ${t.note ? `<div class="task-note">${escapeHtml(t.note)}</div>` : ''}
+          ${subTotal ? `
+            <div class="subtasks">
+              ${t.subtasks.map((s,i) => `
+                <label class="subtask ${s.done?'done':''}" data-act="sub" data-idx="${i}">
+                  <input type="checkbox" ${s.done?'checked':''}><span>${escapeHtml(s.text)}</span>
+                </label>
+              `).join('')}
+            </div>
+            <div class="mini-progress"><div style="width:${subPct}%"></div></div>
+          ` : ''}
+        </div>
+        <div class="task-actions">
+          <button class="icon-btn" data-act="pin">${t.pinned?'📍':'📌'}</button>
+          <button class="icon-btn" data-act="edit">✏️</button>
+          <button class="icon-btn del" data-act="del">🗑</button>
+        </div>
+      `;
+      el.addEventListener('click', e => {
+        const sub = e.target.closest('[data-act="sub"]');
+        if (sub) { e.preventDefault(); toggleSub(t.id, +sub.dataset.idx); return; }
+        const act = e.target.closest('[data-act]')?.dataset.act;
+        if (!act) return;
+        if (act === 'toggle') toggleTask(t.id);
+        if (act === 'del') confirmDelete(t.id);
+        if (act === 'edit') editTask(t.id);
+        if (act === 'pin') { t.pinned = !t.pinned; saveTasks(); render(); }
+      });
+      listEl.appendChild(el);
+    });
+  }
+  renderCatFilters();
+  renderChart();
+}
+function renderCatFilters() {
+  const el = $('catFilters');
+  const counts = {};
+  tasks.forEach(t => counts[t.category] = (counts[t.category]||0) + 1);
+  let html = `<div class="filter ${catFilter==='all'?'active':''}" data-catf="all">Все (${tasks.length})</div>`;
+  for (const [k,v] of Object.entries(CATS)) html += `<div class="filter ${catFilter===k?'active':''}" data-catf="${k}">${v.icon} ${v.name} (${counts[k]||0})</div>`;
+  el.innerHTML = html;
+  el.querySelectorAll('[data-catf]').forEach(b => b.addEventListener('click', () => { catFilter = b.dataset.catf; render(); }));
+}
+
+/* ============================================================
+   TASK ACTIONS
+============================================================ */
+function addTask(e) {
+  e.preventDefault();
+  const title = $('fTitle').value.trim();
+  if (!title) return;
+  const subs = $('fSubtasks').value.split(',').map(s=>s.trim()).filter(Boolean).map(s=>({text:s,done:false}));
+  tasks.push({
+    id: Date.now() + Math.random(), title,
+    date: $('fDate').value || todayStr(),
+    time: $('fTime').value, priority: $('fPriority').value,
+    repeat: $('fRepeat').value, category: currentCat,
+    note: $('fNote').value.trim(), subtasks: subs,
+    done: false, pinned: false, created: Date.now()
+  });
+  $('taskForm').reset();
+  $('fDate').value = todayStr();
+  currentCat = 'work';
+  document.querySelectorAll('#catPicker .cat-chip').forEach((c,i)=>c.classList.toggle('active', i===0));
+  saveTasks(); render();
+  toast('Добавлена ✅');
+  if (settings.soundActions) beep(660, 0.1, 0.15);
+  $('fTitle').focus();
+}
+function toggleTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  if (t.done && t.repeat) createRecurring(t);
+  saveTasks(); render();
+  if (t.done) { toast('Выполнено! 🎉'); if (settings.soundActions) beep(880, 0.15, 0.15); }
+}
+function createRecurring(t) {
+  const d = new Date(t.date || todayStr());
+  const next = new Date(d);
+  if (t.repeat === 'daily') next.setDate(next.getDate()+1);
+  else if (t.repeat === 'weekdays') { do { next.setDate(next.getDate()+1); } while ([0,6].includes(next.getDay())); }
+  else if (t.repeat === 'weekly') next.setDate(next.getDate()+7);
+  else if (t.repeat === 'monthly') next.setMonth(next.getMonth()+1);
+  else return;
+  if (tasks.some(x => !x.done && x.title === t.title && x.date === fmtDate(next))) return;
+  tasks.push({ ...t, id: Date.now() + Math.random(), date: fmtDate(next), done: false, subtasks: t.subtasks.map(s => ({...s, done:false})), created: Date.now() });
+}
+function toggleSub(id, idx) {
+  const t = tasks.find(x => x.id === id);
+  if (!t || !t.subtasks[idx]) return;
+  t.subtasks[idx].done = !t.subtasks[idx].done;
+  saveTasks(); render();
+}
+let pendingDeleteId = null;
+function confirmDelete(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  pendingDeleteId = id;
+  $('modalTitle').textContent = 'Удалить?';
+  $('modalText').textContent = `"${t.title}" будет удалена.`;
+  $('modalBg').classList.add('show');
+}
+function editTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  $('modalTitle').textContent = 'Редактировать';
+  $('modalText').innerHTML = `
+    <div class="field"><label>Название</label><input id="edTitle" value="${escapeHtml(t.title)}"></div>
+    <div class="row">
+      <div class="field"><label>Дата</label><input type="date" id="edDate" value="${t.date||''}"></div>
+      <div class="field"><label>Время</label><input type="time" id="edTime" value="${t.time||''}"></div>
+    </div>
+    <div class="field"><label>Приоритет</label>
+      <select id="edPriority">
+        <option value="low" ${t.priority==='low'?'selected':''}>🟢</option>
+        <option value="medium" ${t.priority==='medium'?'selected':''}>🟡</option>
+        <option value="high" ${t.priority==='high'?'selected':''}>🔴</option>
+      </select>
+    </div>
+    <div class="field"><label>Заметка</label><textarea id="edNote">${escapeHtml(t.note||'')}</textarea></div>
+  `;
+  $('modalOk').textContent = 'Сохранить';
+  $('modalOk').className = 'btn';
+  $('modalOk').onclick = () => {
+    t.title = $('edTitle').value.trim() || t.title;
+    t.date = $('edDate').value;
+    t.time = $('edTime').value;
+    t.priority = $('edPriority').value;
+    t.note = $('edNote').value.trim();
+    saveTasks(); render(); closeModal();
+    toast('Изменено ✏️');
+  };
+  $('modalBg').classList.add('show');
+}
+
+/* ============================================================
+   TEMPLATES
+============================================================ */
+function renderTemplates() {
+  const grid = $('templatesGrid');
+  grid.innerHTML = TEMPLATES.map(t => `
+    <div class="template-card ${t.premium ? 'premium-template' : ''}" data-tpl="${t.id}">
+      ${t.premium ? '<div class="lock-badge">👑</div>' : ''}
+      <div class="tc-icon">${t.icon}</div>
+      <div class="tc-title">${t.title}</div>
+      <div class="tc-desc">${t.desc}</div>
+      <div class="tc-count">${t.tasks.length} задач</div>
+    </div>
+  `).join('');
+  grid.querySelectorAll('[data-tpl]').forEach(card => card.addEventListener('click', () => applyTemplate(card.dataset.tpl)));
+}
+function applyTemplate(id) {
+  const tpl = TEMPLATES.find(t => t.id === id);
+  if (!tpl) return;
+  if (tpl.premium && !premium.active && !isAdmin) {
+    toast('👑 Premium-шаблон');
+    setTimeout(() => switchTab('premium'), 800);
+    return;
+  }
+  const today = todayStr();
+  tpl.tasks.forEach(t => {
+    tasks.push({
+      id: Date.now() + Math.random(), title: t.title, date: today,
+      time: t.time || '', priority: t.priority || 'medium',
+      repeat: '', category: t.category || 'other', note: '',
+      subtasks: [], done: false, pinned: false, created: Date.now()
+    });
+  });
+  saveTasks(); render();
+  toast(`Шаблон «${tpl.title}» добавлен 🎁`);
+  beep(880, 0.2, 0.15);
+  switchTab('planner');
+}
+
+/* ============================================================
+   TABS
+============================================================ */
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page === name));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (name === 'templates') renderTemplates();
+  if (name === 'admin' && isAdmin) renderAdmin();
+  if (name === 'stats') renderStats();
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+/* ============================================================
+   STATS
+============================================================ */
+function renderStats() {
+  const hm = $('heatmap');
+  if (hm) {
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const ds = fmtDate(d);
+      const done = tasks.filter(t => t.done && t.date === ds).length;
+      days.push({ ds, done, label: `${d.getDate()}.${d.getMonth()+1}: ${done}` });
+    }
+    const max = Math.max(1, ...days.map(d => d.done));
+    hm.innerHTML = days.map(d => {
+      const level = d.done === 0 ? 0 : Math.ceil(d.done / max * 4);
+      return `<div class="heatmap-cell" data-level="${level}" title="${d.label}"></div>`;
+    }).join('');
+  }
+  const cb = $('catBars');
+  if (cb) {
+    const counts = {};
+    Object.keys(CATS).forEach(k => counts[k] = 0);
+    tasks.forEach(t => counts[t.category] = (counts[t.category] || 0) + 1);
+    const max = Math.max(1, ...Object.values(counts));
+    cb.innerHTML = Object.entries(CATS).map(([k, v]) => `
+      <div class="cat-bar-row">
+        <div class="cat-label">${v.icon} ${v.name}</div>
+        <div class="cat-track"><div class="cat-fill" style="width:${(counts[k]/max*100)}%;background:${v.color}"></div></div>
+        <div class="cat-num">${counts[k]}</div>
+      </div>
+    `).join('');
+  }
+  const premCards = ['premCard1','premCard2','premCard3','premCard4','premCard5'];
+  const canSee = premium.active || isAdmin;
+  premCards.forEach(id => {
+    const el = $(id);
+    if (el) el.classList.toggle('locked', !canSee);
+  });
+  if (canSee) {
+    const doneTasks = tasks.filter(t => t.done).length;
+    $('avgTime').textContent = doneTasks ? `${doneTasks} задач` : '—';
+    const dayCounts = [0,0,0,0,0,0,0];
+    tasks.filter(t => t.done && t.date).forEach(t => {
+      const d = new Date(t.date + 'T00:00:00');
+      dayCounts[d.getDay()]++;
+    });
+    const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    const best = dayCounts.indexOf(Math.max(...dayCounts));
+    $('bestDay').textContent = Math.max(...dayCounts) > 0 ? dayNames[best] : '—';
+    const pr = { low: { done: 0, total: 0 }, medium: { done: 0, total: 0 }, high: { done: 0, total: 0 } };
+    tasks.forEach(t => { pr[t.priority].total++; if (t.done) pr[t.priority].done++; });
+    $('prioStats').innerHTML = Object.entries(pr).map(([k, v]) => {
+      const pct = v.total ? Math.round(v.done / v.total * 100) : 0;
+      const labels = { low: '🟢 Низкий', medium: '🟡 Средний', high: '🔴 Высокий' };
+      return `<div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>${labels[k]}</span><span>${v.done}/${v.total} (${pct}%)</span></div>
+        <div style="height:6px;background:var(--bg-2);border-radius:99px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--accent);border-radius:99px;transition:width .5s"></div></div>
+      </div>`;
+    }).join('');
+    const rec = +(localStorage.getItem(STREAK_RECORD_KEY) || 0);
+    $('streakRecord').textContent = rec ? `${rec} 🔥` : '—';
+    const trend = $('trendChart');
+    if (trend) {
+      const days = [];
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const ds = fmtDate(d);
+        const done = tasks.filter(t => t.done && t.date === ds).length;
+        days.push({ done, label: d.getDate() });
+      }
+      const max = Math.max(1, ...days.map(d => d.done));
+      trend.innerHTML = `<div style="display:flex;align-items:flex-end;gap:3px;height:100%">
+        ${days.map(d => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
+          <div style="width:100%;background:linear-gradient(180deg,var(--accent),var(--accent-2));border-radius:3px 3px 0 0;height:${(d.done/max*100)||2}%;min-height:2px"></div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">${d.label}</div>
+        </div>`).join('')}
+      </div>`;
+    }
+  }
+}
+
+/* ============================================================
+   FILTERS
+============================================================ */
+document.querySelectorAll('.filter[data-filter]').forEach(f => {
+  f.addEventListener('click', () => {
+    document.querySelectorAll('.filter[data-filter]').forEach(x => x.classList.remove('active'));
+    f.classList.add('active');
+    filter = f.dataset.filter;
+    render();
+  });
+});
+$('search').addEventListener('input', e => { searchQuery = e.target.value; render(); });
+$('sortBtn').addEventListener('click', () => {
+  const modes = ['time','priority','created','alpha'];
+  const labels = {time:'по времени',priority:'по приоритету',created:'по дате',alpha:'по алфавиту'};
+  sortMode = modes[(modes.indexOf(sortMode)+1) % modes.length];
+  toast('Сортировка: ' + labels[sortMode]);
+  render();
+});
+
+/* ============================================================
+   CLEAR / EXPORT / IMPORT
+============================================================ */
+$('clearDone').addEventListener('click', () => {
+  const n = tasks.filter(t => t.done).length;
+  if (!n) return toast('Нет выполненных');
+  $('modalTitle').textContent = 'Удалить выполненные?';
+  $('modalText').textContent = `Будет удалено ${n}.`;
+  $('modalOk').onclick = () => {
+    tasks = tasks.filter(t => !t.done);
+    saveTasks(); render(); closeModal();
+    toast('Удалено');
+  };
+  $('modalBg').classList.add('show');
+});
+$('clearAll').addEventListener('click', () => {
+  if (!tasks.length) return toast('Пусто');
+  $('modalTitle').textContent = 'Удалить ВСЕ?';
+  $('modalText').textContent = 'Необратимо!';
+  $('modalOk').onclick = () => {
+    tasks = []; saveTasks(); render(); closeModal();
+    toast('Все удалены');
+  };
+  $('modalBg').classList.add('show');
+});
+$('modalCancel').addEventListener('click', closeModal);
+$('modalBg').addEventListener('click', e => { if (e.target === $('modalBg')) closeModal(); });
+$('modalOk').addEventListener('click', () => {
+  if (pendingDeleteId !== null) {
+    tasks = tasks.filter(x => x.id !== pendingDeleteId);
+    pendingDeleteId = null;
+    saveTasks(); render(); closeModal();
+    toast('Удалена');
+  }
+});
+function exportData() {
+  const data = JSON.stringify(tasks, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `dayflow-${todayStr()}.json`; a.click();
+  URL.revokeObjectURL(url);
+  toast('Экспорт готов');
+}
+$('exportBtn').addEventListener('click', exportData);
+$('importBtn').addEventListener('click', () => $('importFile').click());
+$('importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data)) throw 0;
+      if (!confirm(`Импортировать ${data.length}?`)) return;
+      tasks = data; saveTasks(); render(); toast('Импортировано');
+    } catch { toast('Ошибка'); }
+  };
+  r.readAsText(f); e.target.value = '';
+});
+$('themeBtn').addEventListener('click', () => {
+  applyTheme(document.body.dataset.theme === 'light' ? 'dark' : 'light');
+});
+
+/* ============================================================
+   TIMER
+============================================================ */
+let timerTotal = 25 * 60, timerLeft = 25 * 60, timerInterval = null, timerRunning = false;
+function fmtTimer(s) {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return h > 0 ? `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}` : `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+function renderTimer() {
+  $('timerTime').textContent = fmtTimer(timerLeft);
+  const len = 2 * Math.PI * 76;
+  $('timerArc').style.strokeDasharray = len;
+  $('timerArc').style.strokeDashoffset = len * (1 - timerLeft / Math.max(1, timerTotal));
+}
+function setTimerFromInputs() {
+  const h = Math.max(0, Math.min(23, +$('tHours').value || 0));
+  const m = Math.max(0, Math.min(59, +$('tMinutes').value || 0));
+  const s = Math.max(0, Math.min(59, +$('tSeconds').value || 0));
+  const total = h * 3600 + m * 60 + s;
+  if (total <= 0) return toast('Введи время > 0');
+  timerTotal = total; timerLeft = total;
+  stopTimer(); renderTimer();
+  $('timerStatus').textContent = `Установлено: ${fmtTimer(total)}`;
+  toast('Таймер установлен');
+}
+function startStopTimer() {
+  if (timerRunning) { stopTimer(); return; }
+  if (timerLeft <= 0) timerLeft = timerTotal;
+  timerRunning = true;
+  $('timerStart').textContent = '⏸ Пауза';
+  timerInterval = setInterval(() => {
+    timerLeft--; renderTimer();
+    $('timerStatus').textContent = `Отсчёт: ${fmtTimer(timerLeft)}`;
+    if (timerLeft <= 0) stopTimer(true);
+  }, 1000);
+}
+function stopTimer(finished = false) {
+  clearInterval(timerInterval); timerRunning = false;
+  $('timerStart').textContent = '▶ Старт';
+  if (finished) {
+    if (settings.soundPomo) { beep(880, 0.3, 0.3); setTimeout(() => beep(880, 0.3, 0.3), 400); setTimeout(() => beep(1100, 0.5, 0.3), 800); }
+    toast('Время вышло! ⏰');
+    $('timerStatus').textContent = '✅ Время вышло';
+    if (settings.notify && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('DayFlow PRO', { body: 'Время вышло! ⏰' });
+    }
+    timerLeft = timerTotal;
+    setTimeout(() => renderTimer(), 1500);
+  }
+}
+$('timerStart').addEventListener('click', startStopTimer);
+$('timerReset').addEventListener('click', () => {
+  stopTimer(); timerLeft = timerTotal; renderTimer();
+  $('timerStatus').textContent = `Сброшено: ${fmtTimer(timerTotal)}`;
+});
+$('tApply').addEventListener('click', setTimerFromInputs);
+document.querySelectorAll('[data-tmin]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('[data-tmin]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const mins = +b.dataset.tmin;
+    $('tHours').value = Math.floor(mins / 60);
+    $('tMinutes').value = mins % 60;
+    $('tSeconds').value = 0;
+    setTimerFromInputs();
+  });
+});
+
+/* ============================================================
+   CHART
+============================================================ */
+function renderChart() {
+  const el = $('chartBars');
+  const now = new Date();
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate()-i);
+    const ds = fmtDate(d);
+    const count = tasks.filter(t => t.date === ds && t.done).length;
+    days.push({ label: ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'][d.getDay()], count });
+  }
+  const max = Math.max(1, ...days.map(d=>d.count));
+  el.innerHTML = days.map(d => `
+    <div class="chart-bar">
+      <div class="bar" style="height:${(d.count/max*100)||3}%"></div>
+      <div class="lbl">${d.label}</div>
+    </div>
+  `).join('');
+}
+
+/* ============================================================
+   SETTINGS
+============================================================ */
+function initSettings() {
+  $('setTheme').value = settings.theme;
+  $('setFont').value = settings.fontSize;
+  $('setSoundPomo').checked = settings.soundPomo;
+  $('setSoundActions').checked = settings.soundActions;
+  $('setNotify').checked = settings.notify;
+  $('setTheme').addEventListener('change', e => {
+    applyTheme(e.target.value);
+    if (PREMIUM_THEMES.includes(e.target.value) && !premium.active && !isAdmin) {
+      e.target.value = settings.theme;
+    }
+  });
+  $('setFont').addEventListener('change', e => applyFont(+e.target.value));
+  $('setSoundPomo').addEventListener('change', e => { settings.soundPomo = e.target.checked; saveSettings(); });
+  $('setSoundActions').addEventListener('change', e => { settings.soundActions = e.target.checked; saveSettings(); });
+  $('setNotify').addEventListener('change', async e => {
+    settings.notify = e.target.checked; saveSettings();
+    if (e.target.checked && 'Notification' in window) {
+      const p = await Notification.requestPermission();
+      if (p !== 'granted') { settings.notify = false; e.target.checked = false; saveSettings(); toast('Запрещено'); }
+      else toast('Включены 🔔');
+    }
+  });
+  $('setExport').addEventListener('click', exportData);
+  $('setImport').addEventListener('click', () => $('importFile').click());
+  $('setReset').addEventListener('click', () => {
+    $('modalTitle').textContent = 'Сбросить всё?';
+    $('modalText').textContent = 'Удалятся ВСЕ данные.';
+    $('modalOk').onclick = () => {
+      [STORAGE_KEY, SETTINGS_KEY, STREAK_KEY, PREMIUM_KEY, CODES_KEY, USED_CODES_KEY, HISTORY_KEY].forEach(k => localStorage.removeItem(k));
+      location.reload();
+    };
+    $('modalBg').classList.add('show');
+  });
+}
+
+/* ============================================================
+   PREMIUM PAYMENT
+============================================================ */
+let selectedPlan = null;
+function selectPlan(plan) {
+  selectedPlan = plan;
+  $('payPlan').textContent = PREMIUM_CONFIG.planNames[plan];
+  $('payAmount').textContent = formatPrice(PREMIUM_CONFIG.prices[plan]);
+  $('payPhone').textContent = PREMIUM_CONFIG.phone;
+  $('payName').textContent = PREMIUM_CONFIG.receiverName;
+  $('payBank').textContent = PREMIUM_CONFIG.bank;
+  $('noteAmount').textContent = formatPrice(PREMIUM_CONFIG.prices[plan]);
+  $('premiumContent').classList.add('hidden');
+  $('paymentPage').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+$('premiumBtn').addEventListener('click', () => switchTab('premium'));
+document.addEventListener('click', e => {
+  if (e.target.id === 'copyPhone') {
+    navigator.clipboard.writeText(PREMIUM_CONFIG.phone).then(() => {
+      const btn = $('copyPhone');
+      btn.textContent = '✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Копировать'; btn.classList.remove('copied'); }, 2000);
+      toast('Скопировано 📋');
+    });
+  }
+});
+$('backToPlans').addEventListener('click', () => {
+  $('paymentPage').classList.add('hidden');
+  $('premiumContent').classList.remove('hidden');
+});
+$('confirmPay').addEventListener('click', () => {
+  const email = $('userEmailForCode').value.trim();
+  if (!email) return toast('Укажи email для кода');
+  const plan = PREMIUM_CONFIG.planNames[selectedPlan];
+  const price = formatPrice(PREMIUM_CONFIG.prices[selectedPlan]);
+  const subject = encodeURIComponent(`DayFlow Premium — оплата «${plan}» (${price})`);
+  const body = encodeURIComponent(
+`Привет! Оплатил(а) подписку DayFlow Premium.
+
+Тариф: ${plan}
+Сумма: ${price}
+СБП: ${PREMIUM_CONFIG.phone}
+Дата: ${new Date().toLocaleString('ru-RU')}
+
+📎 Прикладываю чек.
+
+Мой email для получения и активации кода:
+${email}
+
+⚠️ ВАЖНО: код должен быть привязан именно к этому email.
+
+Спасибо!`);
+  window.location.href = `mailto:${PREMIUM_CONFIG.email}?subject=${subject}&body=${body}`;
+  toast('Открываем почту 📧');
+});
+
+$('activateBtn').addEventListener('click', activateByCode);
+$('activationCode').addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); activateByCode(); } });
+$('activationEmail').addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); activateByCode(); } });
+$('activationCode').addEventListener('input', e => {
+  let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (v.startsWith('DF')) v = v.substring(2);
+  let result = 'DF-';
+  if (v.length > 0) result += v[0];
+  if (v.length > 1) result += '-' + v.substring(1, 6);
+  if (v.length > 6) result += '-' + v.substring(6, 11);
+  e.target.value = result;
+});
+function activateByCode() {
+  const code = $('activationCode').value.trim().toUpperCase();
+  const email = $('activationEmail').value.trim();
+  if (!code) return toast('Введи код');
+  if (!email) return toast('Введи email, на который покупал');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast('Неверный email');
+  const result = validateCode(code, email);
+  if (!result.valid) { toast('❌ ' + result.reason); return; }
+
+  premium.active = true;
+  premium.plan = result.plan;
+  premium.email = normalizeEmail(email);
+  if (result.plan === 'forever') premium.until = null;
+  else if (result.plan === 'month') { const d = new Date(); d.setMonth(d.getMonth()+1); premium.until = fmtDate(d); }
+  else if (result.plan === 'year') { const d = new Date(); d.setFullYear(d.getFullYear()+1); premium.until = fmtDate(d); }
+  savePremium();
+
+  const used = JSON.parse(localStorage.getItem(USED_CODES_KEY) || '[]');
+  used.push(code);
+  localStorage.setItem(USED_CODES_KEY, JSON.stringify(used));
+
+  // 📚 Добавляем в историю
+  addToHistory({
+    date: todayStr(),
+    time: new Date().toLocaleTimeString('ru-RU'),
+    email: normalizeEmail(email),
+    code: code,
+    plan: result.plan,
+    device: detectDevice(),
+    until: premium.until
+  });
+
+  $('activationCode').value = '';
+  $('activationEmail').value = '';
+  toast('👑 Premium активирован!');
+  beep(880, 0.3, 0.3);
+  setTimeout(() => beep(1100, 0.5, 0.3), 400);
+  updatePremiumUI();
+}
+$('expiryRenew').addEventListener('click', () => switchTab('premium'));
+
+/* ============================================================
+   ADMIN
+============================================================ */
+function checkAdmin() {
+  if (localStorage.getItem(ADMIN_KEY) === 'unlocked') { isAdmin = true; applyAdminUI(); }
+}
+function applyAdminUI() {
+  if (isAdmin) {
+    $('adminTrigger').classList.add('unlocked');
+    $('adminTrigger').textContent = '🔓';
+    $('adminBadge').classList.remove('hidden');
+    $('adminTab').classList.remove('hidden');
+  } else {
+    $('adminTrigger').classList.remove('unlocked');
+    $('adminTrigger').textContent = '🔧';
+    $('adminBadge').classList.add('hidden');
+    $('adminTab').classList.add('hidden');
+  }
+}
+$('adminTrigger').addEventListener('click', () => {
+  if (isAdmin) { switchTab('admin'); return; }
+  $('modalTitle').textContent = '🔐 Админ-вход';
+  $('modalText').innerHTML = `<div class="field"><label>Пароль</label><input type="password" id="adminPassInput"></div>`;
+  $('modalOk').textContent = 'Войти';
+  $('modalOk').className = 'btn';
+  $('modalOk').onclick = () => {
+    if ($('adminPassInput').value === ADMIN_PASSWORD) {
+      isAdmin = true;
+      localStorage.setItem(ADMIN_KEY, 'unlocked');
+      applyAdminUI(); closeModal();
+      toast('✅ Админ');
+      switchTab('admin');
+    } else {
+      toast('❌ Неверный пароль');
+      $('adminPassInput').value = '';
+      $('adminPassInput').focus();
+    }
+  };
+  $('modalBg').classList.add('show');
+  setTimeout(() => $('adminPassInput')?.focus(), 100);
+});
+$('adminLogout').addEventListener('click', () => {
+  isAdmin = false;
+  localStorage.removeItem(ADMIN_KEY);
+  applyAdminUI();
+  switchTab('planner');
+  toast('Вы вышли');
+});
+
+function renderAdmin() {
+  $('adminTotalTasks').textContent = tasks.length;
+  $('adminPremiumStatus').textContent = premium.active ? '✅' : '❌';
+  $('adminPremiumStatus').style.color = premium.active ? 'var(--green)' : 'var(--red)';
+  $('adminPlan').textContent = premium.plan ? PREMIUM_CONFIG.planNames[premium.plan] : '—';
+  $('adminUntil').textContent = premium.plan === 'forever' ? '∞' : (premium.until || '—');
+  const used = JSON.parse(localStorage.getItem(USED_CODES_KEY) || '[]');
+  $('adminCodesCount').textContent = generatedCodes.length - generatedCodes.filter(c => used.includes(c.code)).length;
+  $('adminCodesUsed').textContent = used.length;
+  $('emailjsStatus').textContent = EMAILJS_CONFIG.enabled ? '✅ настроен' : '❌ не настроен (ручная отправка)';
+  $('emailjsStatus').style.color = EMAILJS_CONFIG.enabled ? 'var(--green)' : 'var(--red)';
+
+  // Статистика по истории
+  $('adminTotalHistory').textContent = history.length;
+  const today = todayStr();
+  $('adminTodayHistory').textContent = history.filter(h => h.date === today).length;
+
+  const statM = history.filter(h => h.plan === 'month').length;
+  const statY = history.filter(h => h.plan === 'year').length;
+  const statF = history.filter(h => h.plan === 'forever').length;
+  $('statMonth').textContent = statM;
+  $('statYear').textContent = statY;
+  $('statForever').textContent = statF;
+
+  renderGenCodes();
+  renderHistory();
+}
+
+function renderGenCodes() {
+  const el = $('genCodesList');
+  if (!generatedCodes.length) {
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Пока нет кодов</div>`;
+    return;
+  }
+  const used = JSON.parse(localStorage.getItem(USED_CODES_KEY) || '[]');
+  const search = ($('codeSearch')?.value || '').toLowerCase();
+  const filterStatus = $('codeFilterStatus')?.value || 'all';
+  const filterPlan = $('codeFilterPlan')?.value || 'all';
+
+  let filtered = generatedCodes.slice().reverse();
+  if (search) filtered = filtered.filter(g => g.code.toLowerCase().includes(search) || (g.email || '').toLowerCase().includes(search));
+  if (filterStatus === 'active') filtered = filtered.filter(g => !used.includes(g.code));
+  if (filterStatus === 'used') filtered = filtered.filter(g => used.includes(g.code));
+  if (filterPlan !== 'all') filtered = filtered.filter(g => g.plan === filterPlan);
+
+  if (!filtered.length) {
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Ничего не найдено</div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(g => {
+    const isUsed = used.includes(g.code);
+    return `
+      <div class="gen-code-item ${isUsed ? 'used' : ''}">
+        <span class="plan-tag ${g.plan}">${{m:'МЕС',y:'ГОД',f:'∞'}[g.plan]}</span>
+        <span class="code-text">${g.code}</span>
+        ${g.email ? `<span class="email-tag">📧 ${g.email}</span>` : '<span class="email-tag" style="color:var(--red)">⚠ Без email</span>'}
+        ${isUsed ? '<span class="used-mark">ИСП</span>' : `<button class="copy-icon" data-copy="${g.code}">📋</button>`}
+        <button class="del-icon" data-del="${g.code}">🗑</button>
+      </div>
+    `;
+  }).join('');
+  el.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+        btn.textContent = '✓';
+        setTimeout(() => btn.textContent = '📋', 1500);
+        toast('Скопирован 📋');
+      });
+    });
+  });
+  el.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('Удалить этот код?')) return;
+      generatedCodes = generatedCodes.filter(g => g.code !== btn.dataset.del);
+      saveCodes(); renderAdmin();
+      toast('Код удалён');
+    });
+  });
+}
+
+function renderHistory() {
+  const el = $('historyList');
+  if (!el) return;
+  if (!history.length) {
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">История пуста. Активации появятся здесь.</div>`;
+    return;
+  }
+  const search = ($('historySearch')?.value || '').toLowerCase();
+  const filterPlan = $('historyFilterPlan')?.value || 'all';
+  let filtered = history.slice().reverse();
+  if (search) filtered = filtered.filter(h => (h.email || '').toLowerCase().includes(search) || (h.code || '').toLowerCase().includes(search));
+  if (filterPlan !== 'all') filtered = filtered.filter(h => h.plan === filterPlan);
+
+  if (!filtered.length) {
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Ничего не найдено</div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(h => `
+    <div class="history-item">
+      <div class="hi-top">
+        <div class="hi-email">📧 ${h.email || '—'}</div>
+        <div class="hi-date">${h.date} ${h.time || ''}</div>
+      </div>
+      <div class="hi-bottom">
+        <span class="hi-code">${h.code}</span>
+        <span class="hi-plan ${h.plan?.[0] === 'month' ? 'm' : h.plan?.[0] === 'year' ? 'y' : 'f'}">${PREMIUM_CONFIG.planNames[h.plan] || h.plan}</span>
+        <span>📱 ${h.device || '—'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Поиск и фильтры кодов
+['codeSearch','codeFilterStatus','codeFilterPlan'].forEach(id => {
+  const el = $(id);
+  if (el) el.addEventListener('input', renderGenCodes);
+  if (el) el.addEventListener('change', renderGenCodes);
+});
+['historySearch','historyFilterPlan'].forEach(id => {
+  const el = $(id);
+  if (el) el.addEventListener('input', renderHistory);
+  if (el) el.addEventListener('change', renderHistory);
+});
+
+// Генерация
+$('genBtn').addEventListener('click', async () => {
+  const plan = $('genPlan').value;
+  const count = Math.max(1, Math.min(50, +$('genCount').value || 1));
+  const buyerEmail = $('genBuyerEmail').value.trim();
+  if (!buyerEmail) return toast('⚠️ Укажи email — обязательно!');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) return toast('Неверный email');
+  let maxNum = 0;
+  generatedCodes.forEach(g => {
+    const m = g.code.match(/DF-[MYF]-(\d{5})-/);
+    if (m) maxNum = Math.max(maxNum, +m[1]);
+  });
+  const newCodes = [];
+  for (let i = 0; i < count; i++) {
+    maxNum++;
+    const code = generateCode({ m:'month', y:'year', f:'forever' }[plan], maxNum, buyerEmail);
+    if (!code) continue;
+    generatedCodes.push({ code, plan, email: normalizeEmail(buyerEmail), created: Date.now() });
+    newCodes.push(code);
+  }
+  saveCodes(); renderAdmin();
+  toast(`✨ ${newCodes.length} код(ов) для ${buyerEmail}`);
+  if (EMAILJS_CONFIG.enabled && typeof emailjs !== 'undefined') {
+    const planName = PREMIUM_CONFIG.planNames[{ m:'month', y:'year', f:'forever' }[plan]];
+    let until = '∞';
+    if (plan === 'm') { const d = new Date(); d.setMonth(d.getMonth()+1); until = fmtDate(d); }
+    if (plan === 'y') { const d = new Date(); d.setFullYear(d.getFullYear()+1); until = fmtDate(d); }
+    try {
+      await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+        to_email: buyerEmail, code: newCodes[0], plan_name: planName, until: until
+      });
+      toast('✉️ Письмо отправлено на ' + buyerEmail);
+    } catch (e) { toast('⚠️ Код создан, но письмо не отправлено'); }
+  }
+  beep(880, 0.15, 0.15);
+});
+
+// Копировать / скачать
+$('copyAllCodes').addEventListener('click', () => {
+  if (!generatedCodes.length) return toast('Нет кодов');
+  const text = generatedCodes.map(g => `${g.code} | ${g.email || '—'} | ${PREMIUM_CONFIG.planNames[{m:'month',y:'year',f:'forever'}[g.plan]]}`).join('\n');
+  navigator.clipboard.writeText(text).then(() => toast(`📋 ${generatedCodes.length} копировано`));
+});
+$('copyActiveCodes').addEventListener('click', () => {
+  const used = JSON.parse(localStorage.getItem(USED_CODES_KEY) || '[]');
+  const active = generatedCodes.filter(g => !used.includes(g.code));
+  if (!active.length) return toast('Нет активных');
+  const text = active.map(g => `${g.code} | ${g.email || '—'} | ${PREMIUM_CONFIG.planNames[{m:'month',y:'year',f:'forever'}[g.plan]]}`).join('\n');
+  navigator.clipboard.writeText(text).then(() => toast(`📋 ${active.length} копировано`));
+});
+$('downloadCodes').addEventListener('click', () => {
+  if (!generatedCodes.length) return toast('Нет кодов');
+  const used = JSON.parse(localStorage.getItem(USED_CODES_KEY) || '[]');
+  let text = `DayFlow PRO — коды\n${new Date().toLocaleString('ru-RU')}\n\n`;
+  generatedCodes.forEach(g => {
+    const isUsed = used.includes(g.code);
+    const planName = PREMIUM_CONFIG.planNames[{m:'month',y:'year',f:'forever'}[g.plan]];
+    text += `${g.code} | ${g.email || '—'} | ${planName} | ${isUsed ? '❌ ИСП' : '✅ АКТИВЕН'}\n`;
+  });
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `dayflow-codes-${todayStr()}.txt`; a.click();
+  URL.revokeObjectURL(url);
+  toast('Скачано ⬇️');
+});
+$('importCodesBtn').addEventListener('click', () => $('importCodesFile').click());
+$('importCodesFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const lines = ev.target.result.split('\n');
+      let added = 0;
+      lines.forEach(line => {
+        const m = line.match(/DF-[MYF]-\d{5}-\d{5}/);
+        if (!m) return;
+        const code = m[0];
+        if (generatedCodes.some(g => g.code === code)) return;
+        const planChar = code.split('-')[1];
+        const plan = { M: 'm', Y: 'y', F: 'f' }[planChar];
+        const emailMatch = line.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/i);
+        generatedCodes.push({ code, plan, email: emailMatch ? normalizeEmail(emailMatch[0]) : null, created: Date.now() });
+        added++;
+      });
+      saveCodes(); renderAdmin();
+      toast(`✅ Импортировано ${added}`);
+    } catch { toast('Ошибка импорта'); }
+  };
+  r.readAsText(f); e.target.value = '';
+});
+$('clearUsedCodes').addEventListener('click', () => {
+  const used = JSON.parse(localStorage.getItem(USED_CODES_KEY) || '[]');
+  const before = generatedCodes.length;
+  generatedCodes = generatedCodes.filter(g => !used.includes(g.code));
+  saveCodes(); renderAdmin();
+  toast(`Удалено ${before - generatedCodes.length} использованных`);
+});
+$('clearCodes').addEventListener('click', () => {
+  if (!confirm('Удалить все сгенерированные коды?')) return;
+  generatedCodes = [];
+  saveCodes(); renderAdmin();
+  toast('Очищено');
+});
+
+// История
+$('exportHistoryCSV').addEventListener('click', () => {
+  if (!history.length) return toast('История пуста');
+  let csv = 'Дата,Время,Email,Код,Тариф,Действует до,Устройство\n';
+  history.forEach(h => {
+    const planName = PREMIUM_CONFIG.planNames[h.plan] || h.plan;
+    csv += `"${h.date}","${h.time || ''}","${h.email || ''}","${h.code}","${planName}","${h.until || '∞'}","${h.device || ''}"\n`;
+  });
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `dayflow-history-${todayStr()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV готов 📊');
+});
+$('exportHistoryJSON').addEventListener('click', () => {
+  if (!history.length) return toast('История пуста');
+  const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `dayflow-history-${todayStr()}.json`; a.click();
+  URL.revokeObjectURL(url);
+  toast('JSON готов 📦');
+});
+$('clearHistory').addEventListener('click', () => {
+  if (!confirm('Удалить ВСЮ историю подписок? Это необратимо!')) return;
+  if (!confirm('Точно? Данные о всех активациях будут потеряны.')) return;
+  history = [];
+  saveHistory(); renderAdmin();
+  toast('История очищена');
+});
+
+// Своя подписка
+function grantPremium(plan) {
+  premium.active = true;
+  premium.plan = plan;
+  if (plan === 'forever') premium.until = null;
+  else if (plan === 'month') { const d = new Date(); d.setMonth(d.getMonth()+1); premium.until = fmtDate(d); }
+  else if (plan === 'year') { const d = new Date(); d.setFullYear(d.getFullYear()+1); premium.until = fmtDate(d); }
+  savePremium(); renderAdmin();
+  toast('👑 ' + PREMIUM_CONFIG.planNames[plan]);
+}
+$('adminGrantMonth').addEventListener('click', () => grantPremium('month'));
+$('adminGrantYear').addEventListener('click', () => grantPremium('year'));
+$('adminGrantForever').addEventListener('click', () => grantPremium('forever'));
+$('adminRevoke').addEventListener('click', () => {
+  premium = { active: false, plan: null, until: null, email: null };
+  savePremium(); renderAdmin();
+  toast('Отозван');
+});
+$('adminExportAll').addEventListener('click', () => {
+  const data = { tasks, premium, settings, codes: generatedCodes, history, exported: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `dayflow-admin-${todayStr()}.json`; a.click();
+  URL.revokeObjectURL(url);
+  toast('Экспорт');
+});
+$('adminResetAll').addEventListener('click', () => {
+  if (!confirm('Полный сброс?')) return;
+  localStorage.clear();
+  location.reload();
+});
+
+function copyEmail() {
+  navigator.clipboard.writeText(PREMIUM_CONFIG.email).then(() => toast('Скопирован'));
+}
+
+/* ============================================================
+   PWA
+============================================================ */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  if (!localStorage.getItem('pwa_dismissed')) $('pwaBanner').classList.add('show');
+});
+$('pwaInstall').addEventListener('click', async () => {
+  if (!deferredPrompt) { toast('Недоступно'); return; }
+  deferredPrompt.prompt();
+  const r = await deferredPrompt.userChoice;
+  if (r.outcome === 'accepted') toast('Установлено 🎉');
+  deferredPrompt = null;
+  $('pwaBanner').classList.remove('show');
+});
+$('pwaDismiss').addEventListener('click', () => {
+  $('pwaBanner').classList.remove('show');
+  localStorage.setItem('pwa_dismissed', '1');
+});
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('service-worker.js').catch(() => {}));
+}
+
+/* ============================================================
+   KEYBOARD
+============================================================ */
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input,textarea,select')) return;
+  if (e.key === '/') { e.preventDefault(); $('search').focus(); }
+  if (e.key === 'n' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); $('fTitle').focus(); }
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'p' && !e.ctrlKey && !e.metaKey) startStopTimer();
+});
+
+/* ============================================================
+   INIT
+============================================================ */
+function init() {
+  loadSettings();
+  applyTheme(settings.theme);
+  applyFont(settings.fontSize);
+  loadCodes();
+  loadHistory();
+  loadPremium();
+  loadTasks();
+  checkAdmin();
+  tickClock(); setInterval(tickClock, 1000);
+  $('fDate').value = todayStr();
+  renderTimer();
+  render();
+  initSettings();
+  $('taskForm').addEventListener('submit', addTask);
+  setInterval(() => updateStreak(), 60000);
+  setInterval(checkReminders, 60000);
+  setInterval(checkExpiryWarning, 3600000);
+}
+let notifiedIds = new Set();
+function checkReminders() {
+  if (!settings.notify) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const now = new Date();
+  const nowStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  tasks.forEach(t => {
+    if (t.done || !t.time) return;
+    if (t.date && t.date !== todayStr()) return;
+    if (t.time === nowStr && !notifiedIds.has(t.id)) {
+      notifiedIds.add(t.id);
+      new Notification('DayFlow PRO', { body: `🕐 ${t.time} — ${t.title}` });
+    }
+  });
+}
+init();
+</script>
+</body>
+</html>
